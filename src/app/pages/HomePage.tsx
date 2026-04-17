@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { motion, useInView, useScroll, useTransform, useSpring } from "motion/react";
-import { ArrowRight, Star, Flame, Award, MapPin, ArrowUpRight, ChevronDown, Quote, Instagram } from "lucide-react";
+import { ArrowRight, Star, Award, MapPin, ArrowUpRight, Quote, Instagram, Store, Pizza, Sandwich, Drumstick, HandPlatter, Truck, Smartphone, ShieldCheck, ThumbsUp } from "lucide-react";
 import { SplitText } from "../components/SplitText";
 import { MagneticButton } from "../components/MagneticButton";
 import { CountUp } from "../components/CountUp";
@@ -39,13 +39,24 @@ const testimonials = [
   { id: 3, text: "Ambiance unique, nourriture au top. La pizza feu de bois est à tomber. Bref, Mon Boum c'est la life.", author: "Thomas R.", location: "Bordeaux", stars: 5 },
 ];
 
-type GoogleReview = {
-  id: number;
-  text: string;
-  author: string;
-  location: string;
-  stars: number;
-};
+const brandFamily = [
+  { name: "Boum Burger", since: "Depuis 2008", desc: "Smash burgers, tacos & assiettes", icon: Sandwich, href: "/menu#burgers" },
+  { name: "Boum Pizz's", since: "Depuis 2015", desc: "Pizzas feu de bois signatures", icon: Pizza, href: "/menu#pizza" },
+  { name: "Boum Chicken", since: "Depuis 2019", desc: "Fried chicken et tenders maison", icon: Drumstick, href: "/menu#chicken" },
+  { name: "Boum Tacos", since: "Halal", desc: "Tacos généreux & sauces maison", icon: HandPlatter, href: "/menu#tacos" },
+];
+
+const deliverySteps = [
+  { title: "Choisis ton spot", desc: "Sélectionne ton restaurant Mon Boum le plus proche.", icon: Store },
+  { title: "Commande en 2 clics", desc: "Menu, extras, boisson. C'est validé en moins d'une minute.", icon: Smartphone },
+  { title: "Livré chaud et vite", desc: "Tes produits arrivent prêts à boumer, partout en ville.", icon: Truck },
+];
+
+const qualityPillars = [
+  { label: "Ingrédients tracés", icon: ShieldCheck },
+  { label: "Recettes certifiées halal", icon: ThumbsUp },
+  { label: "Préparation à la minute", icon: Star },
+];
 
 /* ─── Sub-components ─────────────────────────────────────── */
 function CategoryCard({ cat, index }: { cat: { label: string; sub: string; img: string; href: string }; index: number }) {
@@ -227,65 +238,12 @@ function ParallaxImage({ src, alt, speed = 0.15 }: { src: string; alt: string; s
 export function HomePage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [liveReviews, setLiveReviews] = useState<GoogleReview[]>([]);
-  const [reviewsLoaded, setReviewsLoaded] = useState(false);
-
-  const googlePlaceId = import.meta.env.VITE_GOOGLE_PLACE_ID as string | undefined;
-  const reviewsLink = googlePlaceId
-    ? `https://search.google.com/local/reviews?placeid=${googlePlaceId}`
-    : "https://www.google.com/maps/search/?api=1&query=Mon+Boum+Toulouse";
-  const activeTestimonials = liveReviews.length > 0 ? liveReviews : testimonials;
-
-  useEffect(() => {
-    document.title = "Mon Boum — Le Meilleur du Street-Food depuis 2004 | Pizza · Burger · Tacos";
-  }, []);
 
   // Testimonial auto-rotate
   useEffect(() => {
     const t = setInterval(() => setActiveTestimonial((p) => (p + 1) % testimonials.length), 5000);
     return () => clearInterval(t);
-  }, [activeTestimonials.length]);
-
-  useEffect(() => {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
-    if (!apiKey || !googlePlaceId) {
-      setReviewsLoaded(true);
-      return;
-    }
-
-    async function fetchGoogleReviews() {
-      try {
-        const response = await fetch(`https://places.googleapis.com/v1/places/${googlePlaceId}`, {
-          headers: {
-            "X-Goog-Api-Key": apiKey,
-            "X-Goog-FieldMask": "displayName,rating,userRatingCount,reviews",
-          },
-        });
-        if (!response.ok) throw new Error("Google reviews request failed");
-        const data = await response.json();
-        const parsed: GoogleReview[] = (data.reviews ?? [])
-          .slice(0, 5)
-          .map((review: any, index: number) => ({
-            id: index + 1,
-            text: review?.text?.text || "Avis client Google",
-            author: review?.authorAttribution?.displayName || "Client Google",
-            location: data?.displayName?.text || "Mon Boum",
-            stars: Math.max(1, Math.min(5, Math.round(review?.rating || data?.rating || 5))),
-          }));
-
-        if (parsed.length > 0) {
-          setLiveReviews(parsed);
-          setActiveTestimonial(0);
-        }
-      } catch (error) {
-        console.warn("Unable to fetch Google reviews", error);
-      } finally {
-        setReviewsLoaded(true);
-      }
-    }
-
-    fetchGoogleReviews();
-  }, [googlePlaceId]);
+  }, []);
 
   // Hero parallax
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -294,12 +252,14 @@ export function HomePage() {
 
   return (
     <>
+      <title>Mon Boum — Le Meilleur du Street-Food depuis 2004 | Pizza · Burger · Tacos</title>
+
       {/* ══════════════════════════════════════════════════
           HERO — Full-screen cinematic
       ══════════════════════════════════════════════════ */}
       <section
         ref={heroRef}
-        className="relative flex flex-col justify-end overflow-hidden"
+        className="relative flex flex-col justify-end overflow-hidden top-safe"
         style={{ height: "100svh", minHeight: "600px", backgroundColor: "var(--b-black)" }}
         aria-label="Héros — Mon Boum street-food"
       >
@@ -466,6 +426,126 @@ export function HomePage() {
       </div>
 
       {/* ══════════════════════════════════════════════════
+          BOUM TEAM — Brand family grid
+      ══════════════════════════════════════════════════ */}
+      <section
+        className="py-20"
+        style={{ backgroundColor: "var(--b-black)" }}
+        aria-label="La Boum Team — Nos enseignes"
+      >
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+          <div className="text-center mb-12">
+            <p className="font-script mb-2" style={{ fontSize: "clamp(2rem, 4vw, 3rem)", color: "var(--b-red)" }}>
+              Faites votre choix
+            </p>
+            <SplitText
+              text="LA BOUM TEAM"
+              as="h2"
+              className="font-display"
+              style={{ fontSize: "clamp(2.8rem, 8vw, 6rem)", lineHeight: 0.9, color: "var(--b-white)", justifyContent: "center" }}
+              mode="words"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {brandFamily.map((brand, index) => {
+              const Icon = brand.icon;
+              return (
+                <motion.div
+                  key={brand.name}
+                  initial={{ opacity: 0, y: 35 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-80px" }}
+                  transition={{ delay: index * 0.08, duration: 0.55 }}
+                >
+                  <Link
+                    to={brand.href}
+                    className="group h-full rounded-2xl p-6 border flex flex-col transition-all duration-300 hover:-translate-y-1"
+                    style={{ backgroundColor: "var(--b-card)", borderColor: "var(--b-border)" }}
+                  >
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4"
+                      style={{ backgroundColor: "rgba(229,37,10,0.16)", color: "var(--b-red)" }}>
+                      <Icon size={20} />
+                    </div>
+                    <h3 className="font-display mb-1" style={{ color: "var(--b-white)", fontSize: "1.7rem", letterSpacing: "0.03em" }}>
+                      {brand.name}
+                    </h3>
+                    <p className="text-xs uppercase tracking-[0.2em] mb-3" style={{ color: "var(--b-yellow)", fontWeight: 700 }}>
+                      {brand.since}
+                    </p>
+                    <p className="text-sm" style={{ color: "var(--b-muted)" }}>{brand.desc}</p>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════
+          DELIVERY FLOW — How it works
+      ══════════════════════════════════════════════════ */}
+      <section
+        className="py-20"
+        style={{ backgroundColor: "var(--b-dark)" }}
+        aria-label="Comment ça boum — Livraison et commande"
+      >
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+          <div className="text-center mb-12">
+            <p className="font-script mb-2" style={{ fontSize: "clamp(1.9rem, 4vw, 2.8rem)", color: "var(--b-red)" }}>
+              Qualité, saveur et traçabilité
+            </p>
+            <SplitText
+              text="COMMENT ÇA BOUM"
+              as="h2"
+              className="font-display"
+              style={{ fontSize: "clamp(2.4rem, 7vw, 5rem)", color: "var(--b-white)", justifyContent: "center" }}
+              mode="words"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            {deliverySteps.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <motion.article
+                  key={step.title}
+                  initial={{ opacity: 0, y: 35 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ delay: index * 0.08, duration: 0.55 }}
+                  className="rounded-2xl p-6 border"
+                  style={{ backgroundColor: "var(--b-card)", borderColor: "var(--b-border)" }}
+                >
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: "rgba(245,197,24,0.15)", color: "var(--b-yellow)" }}>
+                    <Icon size={20} />
+                  </div>
+                  <div className="text-xs uppercase tracking-[0.2em] mb-2" style={{ color: "var(--b-red)", fontWeight: 700 }}>
+                    Étape {index + 1}
+                  </div>
+                  <h3 className="font-display mb-2" style={{ fontSize: "1.8rem", color: "var(--b-white)", lineHeight: 0.95 }}>{step.title}</h3>
+                  <p className="text-sm" style={{ color: "var(--b-muted)" }}>{step.desc}</p>
+                </motion.article>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {qualityPillars.map((pillar) => {
+              const Icon = pillar.icon;
+              return (
+                <div
+                  key={pillar.label}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs uppercase tracking-[0.15em]"
+                  style={{ backgroundColor: "var(--b-card2)", color: "var(--b-white)", border: "1px solid var(--b-border)", fontWeight: 700 }}
+                >
+                  <Icon size={13} style={{ color: "var(--b-yellow)" }} />
+                  {pillar.label}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════
           CATEGORIES — Full screen split
       ══════════════════════════════════════════════════ */}
       <section
@@ -531,7 +611,7 @@ export function HomePage() {
       ══════════════════════════════════════════════════ */}
       <section
         className="relative overflow-hidden"
-        style={{ minHeight: "560px", paddingTop: "5.5rem", paddingBottom: "7.5rem" }}
+        style={{ height: "70vh", minHeight: "500px" }}
         aria-label="Ambiance Mon Boum"
       >
         <ParallaxImage src={IMG.flame} alt="Smash burger en train d'être préparé à feu vif" />
@@ -725,14 +805,14 @@ export function HomePage() {
 
           {/* Testimonial rotator */}
           <div className="relative" style={{ minHeight: "280px" }}>
-            {activeTestimonials.map((t, i) => (
+            {testimonials.map((t, i) => (
               <TestimonialItem key={t.id} t={t} active={i === activeTestimonial} />
             ))}
           </div>
 
           {/* Dots */}
           <div className="flex items-center justify-center gap-3 mt-8">
-            {activeTestimonials.map((_, i) => (
+            {testimonials.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setActiveTestimonial(i)}
@@ -748,20 +828,10 @@ export function HomePage() {
             ))}
           </div>
 
-          <div className="text-center mt-4">
-            <span className="text-xs uppercase tracking-[0.2em]" style={{ color: "var(--b-muted)" }}>
-              {liveReviews.length > 0
-                ? "Avis Google en direct"
-                : reviewsLoaded
-                  ? "Avis locaux en attente de connexion Google"
-                  : "Chargement des avis Google"}
-            </span>
-          </div>
-
           {/* Google link */}
           <div className="text-center mt-8">
             <a
-              href={reviewsLink}
+              href="https://g.co/kgs/monboum"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-xs uppercase tracking-widest group"

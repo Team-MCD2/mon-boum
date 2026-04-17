@@ -176,10 +176,6 @@ export function MenuPage() {
   const [activeCategory, setActiveCategory] = useState("burgers");
   const items = menuData[activeCategory] || [];
 
-  useEffect(() => {
-    document.title = "Menu Mon Boum — Pizza · Burger · Tacos · Sides & Milkshakes";
-  }, []);
-
   // Handle hash navigation
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
@@ -188,8 +184,10 @@ export function MenuPage() {
 
   return (
     <>
+      <title>Menu Mon Boum — Pizza · Burger · Tacos · Sides & Milkshakes</title>
+
       {/* Hero */}
-      <section className="relative pt-32 pb-16 overflow-hidden" style={{ backgroundColor: "var(--b-black)" }} aria-label="Menu Mon Boum">
+      <section className="relative top-safe pb-16 overflow-hidden" style={{ backgroundColor: "var(--b-black)" }} aria-label="Menu Mon Boum">
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle at 30% 50%, var(--b-red), transparent 60%), radial-gradient(circle at 70% 50%, var(--b-yellow), transparent 60%)" }} />
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 mb-4">
