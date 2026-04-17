@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { motion, useInView } from "motion/react";
 import { MapPin, Clock, Phone, ChevronRight, Star, Utensils, Wifi, ParkingCircle, CreditCard } from "lucide-react";
 import { Link } from "react-router";
@@ -10,11 +10,11 @@ const INTERIOR = "https://images.unsplash.com/photo-1765087909999-754261788116?c
 const SMASH = "https://images.unsplash.com/photo-1678110707493-8d05425137ac?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzbWFzaCUyMGJ1cmdlciUyMGJlZWYlMjBwYXR0eSUyMGNoZWVzZSUyMG1lbHRlZHxlbnwxfHx8fDE3NzY0MTk5MDF8MA&ixlib=rb-4.1.0&q=80&w=1080";
 
 const restaurants = [
-  { id: 1, name: "Mon Boum Burger — Pradettes", address: "220 Route de Saint-Simon, 31100 Toulouse", city: "Toulouse", phone: "+33 5 61 40 77 73", hours: { weekdays: "11h30 – 23h00" }, rating: 4.7, reviews: 432, img: INTERIOR, amenities: ["wifi", "parking", "card", "delivery"], isOpen: true, badge: "Restaurant pilote", googleMaps: "https://www.google.com/maps/search/?api=1&query=220+Route+de+Saint-Simon+31100+Toulouse" },
-  { id: 2, name: "Mon Boum Burger — Aucamville", address: "327 Avenue des États-Unis, 31200 Toulouse", city: "Toulouse", phone: "+33 5 61 41 74 17", hours: { weekdays: "11h30 – 23h00" }, rating: 4.6, reviews: 298, img: INTERIOR, amenities: ["wifi", "card", "delivery"], isOpen: true, badge: null, googleMaps: "https://www.google.com/maps/search/?api=1&query=327+Avenue+des+Etats-Unis+31200+Toulouse" },
-  { id: 3, name: "Mon Boum Burger — Colomiers", address: "4 Avenue Édouard Serres, 31770 Colomiers", city: "Colomiers", phone: "+33 5 34 64 04 04", hours: { weekdays: "11h30 – 22h30" }, rating: 4.5, reviews: 201, img: SMASH, amenities: ["wifi", "card"], isOpen: false, badge: "Nouveau", googleMaps: "https://www.google.com/maps/search/?api=1&query=4+Avenue+Edouard+Serres+31770+Colomiers" },
-  { id: 4, name: "Mon Boum Pizz's — Bellefontaine", address: "69 Allée de Bellefontaine, 31100 Toulouse", city: "Toulouse", phone: "+33 5 61 41 64 16", hours: { weekdays: "11h30 – 23h00" }, rating: 4.6, reviews: 351, img: INTERIOR, amenities: ["wifi", "parking", "card", "delivery"], isOpen: true, badge: null, googleMaps: "https://www.google.com/maps/search/?api=1&query=69+Allee+de+Bellefontaine+31100+Toulouse" },
-  { id: 5, name: "Mon Boum Chicken — Vauquelin", address: "152 Rue Nicolas Louis Vauquelin, 31100 Toulouse", city: "Toulouse", phone: "+33 5 34 46 18 38", hours: { weekdays: "11h30 – 23h00" }, rating: 4.8, reviews: 267, img: SMASH, amenities: ["wifi", "card", "delivery"], isOpen: true, badge: "Coup de cœur", googleMaps: "https://www.google.com/maps/search/?api=1&query=152+Rue+Nicolas+Louis+Vauquelin+31100+Toulouse" },
+  { id: 1, name: "Mon Boum — Paris Marais", address: "12 Rue de la Paix, 75003 Paris", city: "Paris", phone: "+33 1 23 45 67 89", hours: { weekdays: "11h30 – 23h00" }, rating: 4.9, reviews: 547, img: INTERIOR, amenities: ["wifi", "parking", "card", "delivery"], isOpen: true, badge: "Restaurant pilote", googleMaps: "https://maps.google.com" },
+  { id: 2, name: "Mon Boum — Lyon Presqu'île", address: "8 Place des Terreaux, 69001 Lyon", city: "Lyon", phone: "+33 4 56 78 90 12", hours: { weekdays: "11h30 – 23h00" }, rating: 4.8, reviews: 312, img: INTERIOR, amenities: ["wifi", "card", "delivery"], isOpen: true, badge: null, googleMaps: "https://maps.google.com" },
+  { id: 3, name: "Mon Boum — Bordeaux", address: "15 Cours de l'Intendance, 33000 Bordeaux", city: "Bordeaux", phone: "+33 5 67 89 01 23", hours: { weekdays: "11h30 – 22h30" }, rating: 4.7, reviews: 198, img: SMASH, amenities: ["wifi", "card"], isOpen: false, badge: "Nouveau", googleMaps: "https://maps.google.com" },
+  { id: 4, name: "Mon Boum — Marseille", address: "3 Rue Saint-Ferréol, 13001 Marseille", city: "Marseille", phone: "+33 4 91 23 45 67", hours: { weekdays: "11h30 – 23h00" }, rating: 4.8, reviews: 421, img: INTERIOR, amenities: ["wifi", "parking", "card", "delivery"], isOpen: true, badge: null, googleMaps: "https://maps.google.com" },
+  { id: 5, name: "Mon Boum — Toulouse", address: "22 Rue de la République, 31000 Toulouse", city: "Toulouse", phone: "+33 5 34 56 78 90", hours: { weekdays: "11h30 – 23h00" }, rating: 4.9, reviews: 289, img: SMASH, amenities: ["wifi", "card", "delivery"], isOpen: true, badge: "Coup de cœur", googleMaps: "https://maps.google.com" },
 ];
 
 const amenityIcons: Record<string, { icon: any; label: string }> = {
@@ -132,14 +132,12 @@ export function RestaurantsPage() {
   const cities = ["Toutes", ...Array.from(new Set(restaurants.map((r) => r.city)))];
   const filtered = selectedCity === "Toutes" ? restaurants : restaurants.filter((r) => r.city === selectedCity);
 
-  useEffect(() => {
-    document.title = "Nos Restaurants Mon Boum — Paris, Lyon, Bordeaux, Marseille, Toulouse";
-  }, []);
-
   return (
     <>
+      <title>Nos Restaurants Mon Boum — Paris, Lyon, Bordeaux, Marseille, Toulouse</title>
+
       {/* Hero */}
-      <section className="relative pt-32 pb-16" style={{ backgroundColor: "var(--b-black)" }} aria-label="Nos restaurants Mon Boum">
+      <section className="relative top-safe pb-16" style={{ backgroundColor: "var(--b-black)" }} aria-label="Nos restaurants Mon Boum">
         <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, var(--b-red), transparent 50%)" }} />
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 mb-4">
@@ -207,7 +205,7 @@ export function RestaurantsPage() {
                 </div>
                 <div className="flex gap-3">
                   <MagneticButton>
-                    <a href="https://www.google.com/maps/search/?api=1&query=220+Route+de+Saint-Simon+31100+Toulouse" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-3 rounded-full text-sm btn-shine" style={{ backgroundColor: "var(--b-red)", color: "white", fontWeight: 600 }} aria-label="Itinéraire Google Maps">
+                    <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-3 rounded-full text-sm btn-shine" style={{ backgroundColor: "var(--b-red)", color: "white", fontWeight: 600 }} aria-label="Itinéraire Google Maps">
                       <MapPin size={14} />Itinéraire
                     </a>
                   </MagneticButton>

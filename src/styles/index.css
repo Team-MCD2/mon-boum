@@ -15,6 +15,7 @@
   --b-muted:  #6b6b6b;
   --b-border: rgba(255,255,255,0.06);
   --b-grain-opacity: 0.055;
+  --nav-offset: clamp(96px, 10vw, 132px);
 }
 
 /* ─── Base reset ─────────────────────────────────────────── */
@@ -43,6 +44,11 @@ a, button, [role="button"], input, select, textarea, label {
 .font-display {
   font-family: 'Bebas Neue', 'Anton', sans-serif;
   letter-spacing: 0.02em;
+}
+
+.font-script {
+  font-family: 'Caveat', cursive;
+  letter-spacing: 0.01em;
 }
 
 /* ─── Grain overlay ──────────────────────────────────────── */
@@ -238,6 +244,10 @@ a, button, [role="button"], input, select, textarea, label {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 
+.top-safe {
+  padding-top: var(--nav-offset);
+}
+
 /* ─── Number ticker ──────────────────────────────────────── */
 @keyframes count-up {
   from { opacity: 0; transform: translateY(20px); }
@@ -268,19 +278,4 @@ a, button, [role="button"], input, select, textarea, label {
   flex: 1;
   height: 1px;
   background: var(--b-border);
-}
-
-/* ─── Pointer accessibility ──────────────────────────────── */
-@media (max-width: 1023px), (pointer: coarse) {
-  html,
-  body,
-  a,
-  button,
-  [role="button"],
-  input,
-  select,
-  textarea,
-  label {
-    cursor: auto !important;
-  }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import { Mail, Phone, MapPin, Send, Instagram, Facebook, Youtube, Clock, ChevronDown } from "lucide-react";
 import { SplitText } from "../components/SplitText";
@@ -44,10 +44,6 @@ export function ContactPage() {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
-    document.title = "Contact Mon Boum — Feedback, Franchise, Recrutement";
-  }, []);
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitted(true);
@@ -56,8 +52,10 @@ export function ContactPage() {
 
   return (
     <>
+      <title>Contact Mon Boum — Feedback, Franchise, Recrutement</title>
+
       {/* Hero */}
-      <section className="relative pt-32 pb-16" style={{ backgroundColor: "var(--b-black)" }} aria-label="Contactez Mon Boum">
+      <section className="relative top-safe pb-16" style={{ backgroundColor: "var(--b-black)" }} aria-label="Contactez Mon Boum">
         <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "radial-gradient(circle at 80% 30%, var(--b-red), transparent 50%)" }} />
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 mb-4">
