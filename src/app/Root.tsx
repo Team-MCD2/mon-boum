@@ -3,13 +3,15 @@ import { useEffect } from "react";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
 import { CustomCursor } from "./components/CustomCursor";
+import { useCustomCursorEnabled } from "./hooks/useCustomCursorEnabled";
 import { CartDrawer } from "./components/CartDrawer";
 import { PageTransition } from "./components/PageTransition";
 import { CartProvider } from "./context/CartContext";
-import { GlobalFaq } from "./components/GlobalFaq";
+import { IntroPreface } from "./components/IntroPreface";
 
 export function Root() {
   const { pathname } = useLocation();
+  const customCursorOn = useCustomCursorEnabled();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -17,13 +19,12 @@ export function Root() {
 
   return (
     <CartProvider>
+      <IntroPreface />
+
       {/* Grain overlay */}
       <div className="grain" aria-hidden="true" />
 
-      {/* Custom cursor — desktop only */}
-      <div className="hidden lg:block">
-        <CustomCursor />
-      </div>
+      {customCursorOn && <CustomCursor />}
 
       {/* Cart drawer */}
       <CartDrawer />
@@ -56,7 +57,6 @@ export function Root() {
             <Outlet />
           </PageTransition>
         </main>
-        {pathname !== "/contact" && <GlobalFaq />}
         <Footer />
       </div>
     </CartProvider>

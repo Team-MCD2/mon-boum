@@ -1,13 +1,15 @@
 import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { motion, useInView, useScroll, useTransform, useSpring } from "motion/react";
-import { ArrowRight, Star, Award, MapPin, ArrowUpRight, Quote, Instagram, Store, Pizza, Sandwich, Drumstick, HandPlatter, Truck, Smartphone, ShieldCheck, ThumbsUp } from "lucide-react";
+import { ArrowRight, Star, Award, MapPin, ArrowUpRight, Quote, Instagram, Store, Truck, Smartphone, ShieldCheck, ThumbsUp } from "lucide-react";
 import { SplitText } from "../components/SplitText";
 import { MagneticButton } from "../components/MagneticButton";
 import { CountUp } from "../components/CountUp";
 import { Marquee } from "../components/Marquee";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { TornPaperDivider } from "../components/TornPaperDivider";
 import { useCart } from "../context/CartContext";
+import { easeOutExpo } from "../lib/motionPresets";
 
 /* ─── Image URLs ─────────────────────────────────────────── */
 const IMG = {
@@ -34,16 +36,16 @@ const featured = [
 ];
 
 const testimonials = [
-  { id: 1, text: "Mon Boum c'est une institution. Je viens depuis 2008 et la qualité ne change jamais — toujours aussi incroyable.", author: "Karim B.", location: "Paris", stars: 5 },
-  { id: 2, text: "La sauce secrète des burgers… je rêve d'en connaître la recette. Le meilleur street-food de Lyon, c'est dit.", author: "Sarah M.", location: "Lyon", stars: 5 },
-  { id: 3, text: "Ambiance unique, nourriture au top. La pizza feu de bois est à tomber. Bref, Mon Boum c'est la life.", author: "Thomas R.", location: "Bordeaux", stars: 5 },
+  { id: 1, text: "Mon Boum c'est une institution. Je viens depuis 2008 et la qualité ne change jamais — toujours aussi incroyable.", author: "Karim B.", location: "Toulouse", stars: 5 },
+  { id: 2, text: "La sauce secrète des burgers… je rêve d'en connaître la recette. Le meilleur street-food, c'est dit.", author: "Sarah M.", location: "Toulouse", stars: 5 },
+  { id: 3, text: "Ambiance unique, nourriture au top. La pizza feu de bois est à tomber. Bref, Mon Boum c'est la life.", author: "Thomas R.", location: "Toulouse", stars: 5 },
 ];
 
 const brandFamily = [
-  { name: "Boum Burger", since: "Depuis 2008", desc: "Smash burgers, tacos & assiettes", icon: Sandwich, href: "/menu#burgers" },
-  { name: "Boum Pizz's", since: "Depuis 2015", desc: "Pizzas feu de bois signatures", icon: Pizza, href: "/menu#pizza" },
-  { name: "Boum Chicken", since: "Depuis 2019", desc: "Fried chicken et tenders maison", icon: Drumstick, href: "/menu#chicken" },
-  { name: "Boum Tacos", since: "Halal", desc: "Tacos généreux & sauces maison", icon: HandPlatter, href: "/menu#tacos" },
+  { name: "Boum Burger", since: "Depuis 2008", desc: "Smash burgers, tacos & assiettes", href: "/menu#burgers", logo: "/branding/Boum-Burgers.png" },
+  { name: "Boum Pizz's", since: "Depuis 2015", desc: "Pizzas feu de bois signatures", href: "/menu#pizza", logo: "/branding/BOUM-Pizzs.png" },
+  { name: "Boum Chicken", since: "Depuis 2019", desc: "Fried chicken et tenders maison", href: "/menu#chicken", logo: "/branding/Boum-Chicken.png" },
+  { name: "Boum Tacos", since: "Halal", desc: "Tacos généreux & sauces maison", href: "/menu#tacos", logo: "/branding/Boums.png" },
 ];
 
 const deliverySteps = [
@@ -58,8 +60,30 @@ const qualityPillars = [
   { label: "Préparation à la minute", icon: Star },
 ];
 
+/** Ils nous ont validé — aligné sur monboum.fr (citations officielles du site) */
+const celebrityQuotes = [
+  { id: "ninho", name: "Ninho", role: "Artiste / Rappeur", img: "/branding/Ninho.jpg", quote: "Boum Burger, c'était lourd !!! Je recommande, Toulouse. On est ensemble 😉" },
+  { id: "dadju", name: "Dadju", role: "Artiste / Chanteur", img: "/branding/Dadju.jpg", quote: "Un accueil et un repas au top. Merci Boum Burger 🙂" },
+  { id: "oli", name: "Oli (Big Flo & Oli)", role: "Artiste / Chanteur", img: "/branding/Oli.jpg", quote: "Boum Burger, on est ensemble la famille 😉" },
+  { id: "vegedream", name: "Vegedream", role: "Artiste / Chanteur", img: "/branding/vegedream.jpg", quote: "Merci pour l'accueil, la graille était formidable, on est ensemble comme jamais !" },
+  { id: "koba", name: "Koba LaD", role: "Chanteur", img: "/branding/Koba-la-d.jpg", quote: "En direct de Toulouse. Grosse CE-FOR à Boum Burger !!! Que de la patate, des supers pizza, c'est eux qui me nourrissent mon reuf !!!" },
+  { id: "algerino", name: "L'Algerino", role: "Artiste / Chanteur", img: "/branding/Algerino.jpg", quote: "Une équipe au top et des burgers de malade ! On est ensemble ;" },
+  { id: "marwa", name: "Marwa Loud", role: "Artiste / Chanteuse", img: "/branding/Marwa.jpg", quote: "C'était super, gros big up à la Boum Team 🙂" },
+  { id: "tayc", name: "Tayc", role: "Artiste / Chanteur", img: "/branding/Tayc.jpg", quote: "Merci la famille, on est ensemble !" },
+  { id: "chily", name: "Chily", role: "Chanteur", img: "/branding/CHILY_FIFOU1350.jpg", quote: "Maximum de force à la team Boum 🙂" },
+  { id: "mario", name: "Mario (Emile et Image)", role: "Chanteur / Musicien", img: "/branding/Mario.jpg", quote: "Un super moment, un délice! Merci Boum 😉" },
+  { id: "landy", name: "Landy", role: "Artiste / Rappeur", img: "/branding/LANDY.png", quote: "En direct de Toulouse, j'ai mangé franchement c'était lourd !!! N'hésitez pas à venir ici, c'est un beau resto 😉" },
+] as const;
+
+const compareBrands = [
+  { name: "Boum Burger", href: "/menu#burgers", blurb: "Smash, sauces maison, le classique qui claque.", logo: "/branding/Boum-Burgers.png" },
+  { name: "BOUM Pizza", href: "/menu#pizza", blurb: "Four à bois, pâte fine, généreux.", logo: "/branding/BOUM-Pizzs.png" },
+  { name: "Boum Chicken", href: "/menu#chicken", blurb: "Croustillant, marinades maison.", logo: "/branding/Boum-Chicken.png" },
+  { name: "Boum Saveurs", href: "/menu", blurb: "Le meilleur du street-food réuni.", logo: "/branding/Boum-Saveurs.png" },
+] as const;
+
 /* ─── Sub-components ─────────────────────────────────────── */
-function CategoryCard({ cat, index }: { cat: { label: string; sub: string; img: string; href: string }; index: number }) {
+function CategoryCard({ cat, index }: { cat: { label: string; sub: string; img: string; href: string; logoUrl?: string }; index: number }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
   return (
@@ -96,6 +120,11 @@ function CategoryCard({ cat, index }: { cat: { label: string; sub: string; img: 
           <div className="font-display" style={{ fontSize: "clamp(3rem, 7vw, 5rem)", lineHeight: 0.9, color: "var(--b-white)", letterSpacing: "0.02em" }}>
             {cat.label}
           </div>
+          {cat.logoUrl && (
+            <div className="mt-3 max-w-[min(220px,70%)]">
+              <img src={cat.logoUrl} alt="" className="w-full h-auto object-contain drop-shadow-lg" loading="lazy" decoding="async" />
+            </div>
+          )}
           <div className="mt-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
             <span className="text-xs uppercase tracking-wider" style={{ color: "var(--b-red)", fontWeight: 700 }}>Découvrir</span>
             <ArrowUpRight size={14} style={{ color: "var(--b-red)" }} />
@@ -182,13 +211,114 @@ function FeaturedCard({ item, index }: { item: typeof featured[0]; index: number
   );
 }
 
+function CelebrityCard({
+  c,
+  index,
+  active,
+  onActivate,
+}: {
+  c: (typeof celebrityQuotes)[number];
+  index: number;
+  active: boolean;
+  onActivate: () => void;
+}) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+  return (
+    <motion.article
+      ref={ref}
+      initial={{ opacity: 0, y: 28 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ delay: (index % 4) * 0.05, duration: 0.5, ease: easeOutExpo }}
+      className={`validated-card relative rounded-2xl overflow-hidden border flex flex-col h-full card-lift ${
+        active ? "ring-2 ring-[var(--b-yellow)]/50 shadow-[0_0_0_1px_rgba(229,37,10,0.25)]" : ""
+      }`}
+      style={{
+        backgroundColor: "var(--b-card)",
+        borderColor: active ? "rgba(245,197,24,0.35)" : "var(--b-border)",
+      }}
+    >
+      {active && (
+        <motion.div
+          className="absolute inset-0 pointer-events-none z-[1]"
+          style={{
+            background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(229,37,10,0.12), transparent 55%)",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        />
+      )}
+      <button
+        type="button"
+        onClick={onActivate}
+        className="text-left w-full flex flex-col flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--b-yellow)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--b-card)] rounded-2xl"
+        aria-pressed={active}
+      >
+        <div className="relative aspect-[4/3] overflow-hidden">
+          <motion.div
+            className="w-full h-full"
+            animate={active ? { scale: 1.06 } : { scale: 1 }}
+            transition={{ duration: 0.55, ease: easeOutExpo }}
+          >
+            <ImageWithFallback src={c.img} alt={c.name} className="w-full h-full object-cover" />
+          </motion.div>
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.15) 50%, transparent 100%)" }}
+          />
+          <div className="absolute top-3 right-3 z-[2]">
+            <motion.span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6rem] uppercase tracking-widest font-bold"
+              style={{
+                backgroundColor: active ? "var(--b-yellow)" : "rgba(6,6,6,0.65)",
+                color: active ? "var(--b-black)" : "var(--b-muted)",
+                border: "1px solid var(--b-border)",
+              }}
+            >
+              <Star size={10} fill="currentColor" className="shrink-0" aria-hidden />
+              {active ? "Spotlight" : "Voir"}
+            </motion.span>
+          </div>
+          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2 z-[2]">
+            <div>
+              <div className="font-franchise text-xl sm:text-2xl leading-none text-white drop-shadow-md">
+                {c.name}
+              </div>
+              <div className="text-[0.65rem] uppercase tracking-widest mt-1" style={{ color: "var(--b-yellow)", fontWeight: 700 }}>
+                {c.role}
+              </div>
+            </div>
+            <Quote size={22} className="opacity-50 shrink-0 text-white" aria-hidden />
+          </div>
+        </div>
+        <div className="p-4 sm:p-5 flex-1 flex flex-col relative z-[2]">
+          <p className="text-xs sm:text-sm leading-relaxed flex-1" style={{ color: "rgba(240,237,232,0.88)" }}>
+            “{c.quote}”
+          </p>
+          <div className="mt-4 pt-4 border-t flex items-center justify-between gap-2" style={{ borderColor: "var(--b-border)" }}>
+            <span className="text-[0.65rem] uppercase tracking-widest flex items-center gap-1.5" style={{ color: "var(--b-muted)", fontWeight: 700 }}>
+              <Star size={14} fill="var(--b-yellow)" style={{ color: "var(--b-yellow)" }} aria-hidden />
+              Validé
+            </span>
+            <span className="text-[0.6rem] uppercase tracking-wider" style={{ color: "var(--b-red)" }}>
+              {active ? "En avant" : "Cliquer"}
+            </span>
+          </div>
+        </div>
+      </button>
+    </motion.article>
+  );
+}
+
 function TestimonialItem({ t, active }: { t: typeof testimonials[0]; active: boolean }) {
   return (
     <motion.div
+      key={t.id}
       initial={false}
-      animate={{ opacity: active ? 1 : 0, y: active ? 0 : 20 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className={`absolute inset-0 flex flex-col items-center justify-center text-center px-4 ${active ? "pointer-events-auto" : "pointer-events-none"}`}
+      animate={{ opacity: active ? 1 : 0, y: active ? 0 : 14, scale: active ? 1 : 0.97 }}
+      transition={{ duration: 0.45, ease: easeOutExpo }}
+      className={`absolute inset-0 flex flex-col items-center justify-center text-center px-4 ${active ? "pointer-events-auto z-[1]" : "pointer-events-none z-0"}`}
     >
       <Quote size={36} className="mb-6 opacity-20" style={{ color: "var(--b-red)" }} />
       <div className="flex gap-1 mb-6">
@@ -238,10 +368,16 @@ function ParallaxImage({ src, alt, speed = 0.15 }: { src: string; alt: string; s
 export function HomePage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [celebSpotlight, setCelebSpotlight] = useState(0);
 
   // Testimonial auto-rotate
   useEffect(() => {
     const t = setInterval(() => setActiveTestimonial((p) => (p + 1) % testimonials.length), 5000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setCelebSpotlight((p) => (p + 1) % celebrityQuotes.length), 7000);
     return () => clearInterval(t);
   }, []);
 
@@ -279,27 +415,31 @@ export function HomePage() {
           />
         </div>
 
-        {/* Ambient glow */}
-        <div
-          className="absolute bottom-1/3 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none"
-          style={{ backgroundColor: "rgba(229,37,10,0.18)" }}
+        {/* Ambient glow — subtle pulse */}
+        <motion.div
+          className="absolute bottom-1/3 left-1/4 w-[min(24rem,50vw)] h-[min(24rem,50vw)] rounded-full blur-[120px] pointer-events-none"
+          style={{ backgroundColor: "rgba(229,37,10,0.16)" }}
+          animate={{ opacity: [0.55, 0.95, 0.55], scale: [1, 1.06, 1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
 
         {/* Main content */}
         <motion.div
           style={{ opacity: heroOpacity }}
-          className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 pb-16 w-full"
+          className="relative z-10 hero-stack max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 pb-12 sm:pb-16 w-full"
         >
-          {/* Tag line */}
+          {/* Tag line — no hero logo (brand mark stays in navbar) */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="flex items-center gap-3 mb-4"
+            transition={{ delay: 0.25, duration: 0.55, ease: easeOutExpo }}
+            className="flex flex-wrap items-center gap-3 mb-6"
           >
-            <div className="w-8 h-px" style={{ backgroundColor: "var(--b-red)" }} />
-            <span className="text-xs uppercase tracking-[0.25em]" style={{ color: "var(--b-red)", fontWeight: 700 }}>
-              Depuis 2004
+            <span className="font-franchise inline-block px-3.5 py-1.5 rounded-full retro-sticker" style={{ backgroundColor: "var(--b-yellow)", color: "var(--b-black)", fontSize: "clamp(0.85rem, 2vw, 1rem)" }}>
+              Depuis 2004 · Toulouse & alentours
+            </span>
+            <span className="text-xs uppercase tracking-[0.2em] hidden sm:inline" style={{ color: "var(--b-muted)", fontWeight: 700 }}>
+              Street-food · Livraison · Sur place
             </span>
           </motion.div>
 
@@ -308,8 +448,8 @@ export function HomePage() {
             <motion.h1
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="font-display"
-              style={{ fontSize: "clamp(4.5rem, 16vw, 14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: "var(--b-white)" }}
+              className="font-display hero-title"
+              style={{ letterSpacing: "0.02em", color: "var(--b-white)" }}
             >
               {["LE", "MEILLEUR"].map((word, wi) => (
                 <span key={wi} className="block overflow-hidden">
@@ -335,9 +475,11 @@ export function HomePage() {
             transition={{ delay: 0.75, duration: 0.7 }}
             className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mt-6"
           >
-            <p className="max-w-sm text-sm leading-relaxed" style={{ color: "rgba(240,237,232,0.55)" }}>
-              Pizzas au feu de bois · Smash burgers · Tacos halal.<br />
-              L'explosion de saveurs dans chaque bouchée.
+            <p className="max-w-md text-sm sm:text-base leading-relaxed font-franchise" style={{ color: "rgba(240,237,232,0.75)", letterSpacing: "0.04em" }}>
+              Pizza · Burger · Tacos — le street-food qui fait boum !<br />
+              <span className="text-white/55 font-sans text-xs sm:text-sm tracking-normal not-italic font-medium">
+                Qualité, générosité, et une team au taquet.
+              </span>
             </p>
             <div className="flex gap-3">
               <MagneticButton>
@@ -370,7 +512,7 @@ export function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
-            className="absolute right-10 bottom-0 flex flex-col items-center gap-2"
+            className="absolute right-4 sm:right-10 bottom-0 hidden sm:flex flex-col items-center gap-2"
             aria-hidden="true"
           >
             <motion.div
@@ -386,31 +528,45 @@ export function HomePage() {
           </motion.div>
 
           {/* Bottom stats strip */}
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.95, duration: 0.55, ease: easeOutExpo }}
             className="hidden lg:flex items-center gap-8 mt-10 pt-6 border-t"
             style={{ borderColor: "var(--b-border)" }}
           >
             {[
               { value: 20, suffix: "+", label: "Ans d'expérience" },
-              { value: 5, suffix: "", label: "Restaurants" },
+              { value: 8, suffix: "", label: "Restaurants" },
               { value: 4.8, suffix: "★", label: "Note Google", decimals: 1 },
-            ].map((s) => (
-              <div key={s.label} className="flex items-center gap-3">
+            ].map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.05 + i * 0.08, duration: 0.45, ease: easeOutExpo }}
+                className="flex items-center gap-3"
+              >
                 <div className="font-display text-white" style={{ fontSize: "2.2rem" }}>
                   <CountUp end={s.value} suffix={s.suffix} decimals={s.decimals || 0} />
                 </div>
                 <span className="text-xs uppercase tracking-widest" style={{ color: "var(--b-muted)", fontWeight: 600 }}>{s.label}</span>
-              </div>
+              </motion.div>
             ))}
-            <div className="ml-auto">
+            <motion.div
+              className="ml-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.35, duration: 0.4 }}
+            >
               <div className="flex gap-1">
                 {[1,2,3,4,5].map((s) => (
                   <Star key={s} size={14} fill="var(--b-yellow)" style={{ color: "var(--b-yellow)" }} />
                 ))}
               </div>
               <span className="text-xs" style={{ color: "var(--b-muted)" }}>+2000 avis</span>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </motion.div>
       </section>
 
@@ -425,6 +581,8 @@ export function HomePage() {
         />
       </div>
 
+      <TornPaperDivider />
+
       {/* ══════════════════════════════════════════════════
           BOUM TEAM — Brand family grid
       ══════════════════════════════════════════════════ */}
@@ -434,7 +592,13 @@ export function HomePage() {
         aria-label="La Boum Team — Nos enseignes"
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-          <div className="text-center mb-12">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.55, ease: easeOutExpo }}
+          >
             <p className="font-script mb-2" style={{ fontSize: "clamp(2rem, 4vw, 3rem)", color: "var(--b-red)" }}>
               Faites votre choix
             </p>
@@ -445,26 +609,24 @@ export function HomePage() {
               style={{ fontSize: "clamp(2.8rem, 8vw, 6rem)", lineHeight: 0.9, color: "var(--b-white)", justifyContent: "center" }}
               mode="words"
             />
-          </div>
+          </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {brandFamily.map((brand, index) => {
-              const Icon = brand.icon;
               return (
                 <motion.div
                   key={brand.name}
                   initial={{ opacity: 0, y: 35 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-80px" }}
-                  transition={{ delay: index * 0.08, duration: 0.55 }}
+                  transition={{ delay: index * 0.08, duration: 0.55, ease: easeOutExpo }}
                 >
                   <Link
                     to={brand.href}
-                    className="group h-full rounded-2xl p-6 border flex flex-col transition-all duration-300 hover:-translate-y-1"
+                    className="group h-full rounded-2xl p-6 border flex flex-col card-lift"
                     style={{ backgroundColor: "var(--b-card)", borderColor: "var(--b-border)" }}
                   >
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4"
-                      style={{ backgroundColor: "rgba(229,37,10,0.16)", color: "var(--b-red)" }}>
-                      <Icon size={20} />
+                    <div className="mb-4 max-w-[200px]">
+                      <img src={brand.logo} alt="" className="h-12 w-auto max-w-full object-contain object-left drop-shadow-md group-hover:scale-[1.02] transition-transform" loading="lazy" decoding="async" />
                     </div>
                     <h3 className="font-display mb-1" style={{ color: "var(--b-white)", fontSize: "1.7rem", letterSpacing: "0.03em" }}>
                       {brand.name}
@@ -490,7 +652,13 @@ export function HomePage() {
         aria-label="Comment ça boum — Livraison et commande"
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-          <div className="text-center mb-12">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.55, ease: easeOutExpo }}
+          >
             <p className="font-script mb-2" style={{ fontSize: "clamp(1.9rem, 4vw, 2.8rem)", color: "var(--b-red)" }}>
               Qualité, saveur et traçabilité
             </p>
@@ -501,7 +669,7 @@ export function HomePage() {
               style={{ fontSize: "clamp(2.4rem, 7vw, 5rem)", color: "var(--b-white)", justifyContent: "center" }}
               mode="words"
             />
-          </div>
+          </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {deliverySteps.map((step, index) => {
               const Icon = step.icon;
@@ -511,13 +679,18 @@ export function HomePage() {
                   initial={{ opacity: 0, y: 35 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-60px" }}
-                  transition={{ delay: index * 0.08, duration: 0.55 }}
-                  className="rounded-2xl p-6 border"
+                  transition={{ delay: index * 0.08, duration: 0.55, ease: easeOutExpo }}
+                  className="rounded-2xl p-6 border card-lift"
                   style={{ backgroundColor: "var(--b-card)", borderColor: "var(--b-border)" }}
                 >
-                  <div className="w-11 h-11 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: "rgba(245,197,24,0.15)", color: "var(--b-yellow)" }}>
+                  <motion.div
+                    className="w-11 h-11 rounded-full flex items-center justify-center mb-4"
+                    style={{ backgroundColor: "rgba(245,197,24,0.15)", color: "var(--b-yellow)" }}
+                    whileHover={{ scale: 1.08, rotate: -6 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 18 }}
+                  >
                     <Icon size={20} />
-                  </div>
+                  </motion.div>
                   <div className="text-xs uppercase tracking-[0.2em] mb-2" style={{ color: "var(--b-red)", fontWeight: 700 }}>
                     Étape {index + 1}
                   </div>
@@ -528,17 +701,22 @@ export function HomePage() {
             })}
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {qualityPillars.map((pillar) => {
+            {qualityPillars.map((pillar, pi) => {
               const Icon = pillar.icon;
               return (
-                <div
+                <motion.div
                   key={pillar.label}
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: pi * 0.1, duration: 0.4, ease: easeOutExpo }}
+                  whileHover={{ scale: 1.04, borderColor: "rgba(229,37,10,0.35)" }}
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs uppercase tracking-[0.15em]"
                   style={{ backgroundColor: "var(--b-card2)", color: "var(--b-white)", border: "1px solid var(--b-border)", fontWeight: 700 }}
                 >
                   <Icon size={13} style={{ color: "var(--b-yellow)" }} />
                   {pillar.label}
-                </div>
+                </motion.div>
               );
             })}
           </div>
@@ -555,14 +733,16 @@ export function HomePage() {
       >
         <div className="grid grid-cols-1 md:grid-cols-3" style={{ minHeight: "60vh" }}>
           {[
-            { label: "PIZZA", sub: "Four à bois", img: IMG.pizza, href: "/menu#pizza" },
-            { label: "BURGER", sub: "Smash beef", img: IMG.burger, href: "/menu#burgers" },
-            { label: "TACOS", sub: "Halal", img: IMG.tacos, href: "/menu#tacos" },
+            { label: "PIZZA", sub: "Four à bois", img: IMG.pizza, href: "/menu#pizza", logoUrl: "/branding/BOUM-Pizzs.png" },
+            { label: "BURGER", sub: "Smash beef", img: IMG.burger, href: "/menu#burgers", logoUrl: "/branding/Boum-Burgers.png" },
+            { label: "TACOS", sub: "Halal", img: IMG.tacos, href: "/menu#tacos", logoUrl: "/branding/Boums.png" },
           ].map((cat, i) => (
             <CategoryCard key={cat.label} cat={cat} index={i} />
           ))}
         </div>
       </section>
+
+      <TornPaperDivider flip />
 
       {/* ══════════════════════════════════════════════════
           FEATURED MENU — 4 cards
@@ -574,7 +754,13 @@ export function HomePage() {
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4">
+          <motion.div
+            className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4"
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.55, ease: easeOutExpo }}
+          >
             <div>
               <div className="hr-label mb-4 max-w-xs">Notre sélection</div>
               <SplitText
@@ -596,7 +782,7 @@ export function HomePage() {
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </MagneticButton>
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {featured.map((item, i) => (
@@ -605,6 +791,81 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════════════
+          COMPARE — sous-marques (browse to compare)
+      ══════════════════════════════════════════════════ */}
+      <section
+        className="py-16 sm:py-20 border-y"
+        style={{ backgroundColor: "var(--b-black)", borderColor: "var(--b-border)" }}
+        aria-label="Comparer les univers Mon Boum"
+      >
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
+            <div>
+              <div className="hr-label mb-4 max-w-md">Fais ton choix</div>
+              <h2 className="font-franchise" style={{ fontSize: "clamp(2.25rem, 6vw, 4rem)", lineHeight: 1, color: "var(--b-white)" }}>
+                Browse & compare
+              </h2>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed" style={{ color: "var(--b-muted)" }}>
+                Chaque univers a son style — clique pour aller au bon coin du menu.
+              </p>
+            </div>
+            <MagneticButton>
+              <Link
+                to="/menu"
+                className="inline-flex items-center gap-2 text-sm uppercase tracking-widest group font-franchise"
+                style={{ color: "var(--b-yellow)" }}
+                aria-label="Voir tout le menu"
+              >
+                Tout comparer sur le menu
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </MagneticButton>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+            {compareBrands.map((b, ci) => (
+              <motion.div
+                key={b.name}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ delay: ci * 0.06, duration: 0.5, ease: easeOutExpo }}
+              >
+              <Link
+                to={b.href}
+                className="group block h-full rounded-2xl p-6 border transition-colors duration-300 card-lift hover:border-[var(--b-red)]/35"
+                style={{ backgroundColor: "var(--b-card)", borderColor: "var(--b-border)" }}
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="h-16 w-16 shrink-0 rounded-xl flex items-center justify-center p-2" style={{ backgroundColor: "var(--b-card2)" }}>
+                    <img src={b.logo} alt="" className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
+                  </div>
+                  <div>
+                    <div className="font-franchise text-xl leading-none" style={{ color: "var(--b-white)" }}>
+                      {b.name}
+                    </div>
+                    <div className="text-[0.65rem] uppercase tracking-widest mt-1" style={{ color: "var(--b-muted)", fontWeight: 700 }}>
+                      Mon Boum
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed mb-4" style={{ color: "rgba(240,237,232,0.65)" }}>
+                  {b.blurb}
+                </p>
+                <span className="inline-flex items-center gap-1 text-xs font-franchise" style={{ color: "var(--b-red)" }}>
+                  Voir le menu
+                  <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </span>
+              </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <TornPaperDivider />
 
       {/* ══════════════════════════════════════════════════
           FULL-WIDTH CINEMATIC BANNER
@@ -652,7 +913,7 @@ export function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════
-          ABOUT �� Editorial split layout
+          ABOUT — Editorial split layout
       ══════════════════════════════════════════════════ */}
       <section
         className="py-24"
@@ -724,7 +985,7 @@ export function HomePage() {
                 style={{ color: "rgba(240,237,232,0.55)", fontSize: "0.95rem" }}
                 itemProp="description"
               >
-                En 2004, Mon Boum ouvre ses portes à Paris avec une conviction simple : le street-food peut être extraordinaire. Pas de compromis, pas de congélateur. Des ingrédients frais, des recettes authentiques, et une passion qui ne faiblit jamais.
+                Depuis 2004, le groupe Mon Boum est présent sur la région toulousaine avec une conviction simple : le street-food peut être extraordinaire. Pas de compromis — des ingrédients frais, des recettes authentiques, et une passion qui ne faiblit jamais.
               </motion.p>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -734,13 +995,13 @@ export function HomePage() {
                 className="mb-10 leading-relaxed"
                 style={{ color: "rgba(240,237,232,0.55)", fontSize: "0.95rem" }}
               >
-                Aujourd'hui, 5 restaurants à travers la France continuent de défendre ce manifeste : pizza cuite au feu de bois, burgers smashés à la commande, tacos montés avec générosité.
+                Aujourd'hui, 8 restaurants sur la région toulousaine portent ce manifeste : pizza au feu de bois, burgers smashés à la commande, tacos montés avec générosité.
               </motion.p>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-6 mb-10 pt-8 border-t" style={{ borderColor: "var(--b-border)" }}>
                 {[
-                  { end: 5, suffix: "", label: "Restaurants" },
+                  { end: 8, suffix: "", label: "Restaurants" },
                   { end: 2, suffix: "M+", label: "Clients servis" },
                   { end: 98, suffix: "%", label: "Satisfaits" },
                 ].map((s) => (
@@ -779,6 +1040,82 @@ export function HomePage() {
           accentColor="rgba(255,255,255,0.4)"
         />
       </div>
+
+      <TornPaperDivider />
+
+      {/* ══════════════════════════════════════════════════
+          ILS NOUS ONT VALIDÉ — célébrités (monboum.fr)
+      ══════════════════════════════════════════════════ */}
+      <section
+        className="validated-showcase relative py-20 sm:py-28 overflow-hidden"
+        style={{ backgroundColor: "var(--b-black)" }}
+        aria-label="Ils nous ont validé — témoignages"
+      >
+        <motion.div
+          className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[min(100vw,720px)] -translate-x-1/2 rounded-full opacity-40"
+          style={{ background: "radial-gradient(circle, rgba(229,37,10,0.35) 0%, transparent 65%)" }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.28, 0.45, 0.28] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden="true"
+        />
+        <motion.div
+          className="pointer-events-none absolute bottom-0 right-0 h-64 w-64 rounded-full opacity-25"
+          style={{ background: "radial-gradient(circle, rgba(245,197,24,0.4) 0%, transparent 70%)" }}
+          animate={{ x: [0, -12, 0], y: [0, 8, 0] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden="true"
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 relative z-[1]">
+          <motion.div
+            className="text-center max-w-3xl mx-auto mb-10 sm:mb-14"
+            initial={{ opacity: 0, y: 22 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.55, ease: easeOutExpo }}
+          >
+            <div className="hr-label justify-center mb-6">La famille</div>
+            <h2 className="font-franchise mb-2" style={{ fontSize: "clamp(2.25rem, 7vw, 5.5rem)", lineHeight: 0.95, color: "var(--b-white)" }}>
+              Ils nous ont
+            </h2>
+            <motion.p
+              className="font-franchise inline-block px-4 py-1 rounded-full retro-sticker"
+              style={{ backgroundColor: "var(--b-red)", color: "white", fontSize: "clamp(2rem, 6.5vw, 4.5rem)" }}
+              initial={{ scale: 0.94, rotate: -2 }}
+              whileInView={{ scale: 1, rotate: -1.5 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.1 }}
+            >
+              Validé
+            </motion.p>
+            <p className="mt-6 text-sm sm:text-base leading-relaxed px-2" style={{ color: "var(--b-muted)" }}>
+              Des artistes qui ont passé à la table — citations reprises du site officiel Mon Boum.
+            </p>
+          </motion.div>
+
+          <div className="mb-8 overflow-hidden rounded-full border py-2.5" style={{ borderColor: "var(--b-border)", backgroundColor: "rgba(20,20,20,0.6)" }}>
+            <Marquee
+              items={celebrityQuotes.map((q) => q.name)}
+              size="sm"
+              accentColor="var(--b-yellow)"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            {celebrityQuotes.map((c, i) => (
+              <CelebrityCard
+                key={c.id}
+                c={c}
+                index={i}
+                active={i === celebSpotlight}
+                onActivate={() => setCelebSpotlight(i)}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <TornPaperDivider flip />
 
       {/* ══════════════════════════════════════════════════
           TESTIMONIALS — Rotative cinematic

@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { ShoppingBag, MapPin, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
-import logoMark from "../../imports/Screenshot_2026-04-17_124658.png";
 
 const links = [
   { href: "/", label: "Accueil" },
@@ -38,13 +37,14 @@ export function Navbar() {
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed top-0 left-0 right-0 z-[4000] transition-all duration-500"
+        transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+        className="fixed top-0 left-0 right-0 z-[4000]"
         style={{
           padding: scrolled ? "12px 0" : "20px 0",
-          backgroundColor: scrolled ? "rgba(6,6,6,0.9)" : "rgba(6,6,6,0.64)",
-          backdropFilter: "blur(24px) saturate(180%)",
-          borderBottom: "1px solid var(--b-border)",
+          backgroundColor: scrolled ? "rgba(6,6,6,0.92)" : "transparent",
+          backdropFilter: scrolled ? "blur(24px) saturate(180%)" : "none",
+          borderBottom: scrolled ? "1px solid var(--b-border)" : "none",
+          boxShadow: scrolled ? "0 12px 40px rgba(0,0,0,0.35)" : "none",
         }}
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 flex items-center justify-between">
@@ -52,23 +52,24 @@ export function Navbar() {
           {/* Logo */}
           <Link to="/" aria-label="Mon Boum — Accueil" className="group flex items-center gap-3">
             <motion.div
-              whileHover={{ scale: 1.04, y: -1 }}
+              whileHover={{ scale: 1.04, rotate: -2 }}
               transition={{ type: "spring", stiffness: 300 }}
-              className="relative overflow-hidden rounded-xl border px-2 py-1"
-              style={{ borderColor: "var(--b-border)", backgroundColor: "rgba(255,255,255,0.96)" }}
+              className="relative h-10 w-[140px] shrink-0 flex items-center"
             >
               <img
-                src={logoMark}
-                alt="Logo Mon Boum"
-                className="h-10 w-auto object-contain sm:h-11"
-                loading="eager"
+                src="/branding/logo-boum.png"
+                alt=""
+                width={140}
+                height={40}
+                className="h-10 w-auto object-contain object-left"
+                decoding="async"
               />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl pointer-events-none" style={{ backgroundColor: "var(--b-red)" }} />
             </motion.div>
-            <div className="hidden sm:block">
-              <div className="font-display text-white leading-none" style={{ fontSize: "1.5rem", letterSpacing: "0.06em" }}>
-                MON<span style={{ color: "var(--b-red)" }}>BOUM</span>
+            <div className="hidden sm:block min-w-0">
+              <div className="font-franchise text-white leading-none" style={{ fontSize: "0.7rem", letterSpacing: "0.12em" }}>
+                Le meilleur du street-food
               </div>
-              <div className="text-white/40 leading-none" style={{ fontSize: "0.45rem", letterSpacing: "0.3em" }}>LE MEILLEUR DU STREET-FOOD</div>
             </div>
           </Link>
 

@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * Street-food / franchise vibe: red core + warm ring with subtle trail.
+ * Only mounted when `useCustomCursorEnabled()` is true (desktop + fine pointer).
+ */
 export function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
@@ -20,8 +24,8 @@ export function CustomCursor() {
     };
 
     const animate = () => {
-      ringX += (mouseX - ringX) * 0.1;
-      ringY += (mouseY - ringY) * 0.1;
+      ringX += (mouseX - ringX) * 0.14;
+      ringY += (mouseY - ringY) * 0.14;
       if (ringRef.current) {
         ringRef.current.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%,-50%)`;
       }
@@ -30,13 +34,13 @@ export function CustomCursor() {
 
     const onEnter = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest("a, button, [data-cursor], input, select, textarea")) {
+      if (target.closest("a, button, [data-cursor], input, select, textarea, [role='button']")) {
         setHovering(true);
       }
     };
     const onLeave = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest("a, button, [data-cursor], input, select, textarea")) {
+      if (target.closest("a, button, [data-cursor], input, select, textarea, [role='button']")) {
         setHovering(false);
       }
     };

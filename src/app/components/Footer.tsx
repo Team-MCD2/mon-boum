@@ -1,8 +1,13 @@
 import { Link } from "react-router";
+import { motion } from "motion/react";
 import { Instagram, Facebook, Youtube, MapPin, Phone, Mail, Clock } from "lucide-react";
-import logoMark from "../../imports/Screenshot_2026-04-17_124658.png";
+import { easeOutExpo } from "../lib/motionPresets";
 
-const cols = [
+type FooterLink =
+  | { label: string; href: string }
+  | { label: string; href: string; external: true };
+
+const cols: { title: string; links: FooterLink[] }[] = [
   {
     title: "Menu",
     links: [
@@ -28,22 +33,25 @@ const cols = [
   {
     title: "Légal",
     links: [
-      { label: "Mentions légales", href: "/contact" },
-      { label: "CGU", href: "/contact" },
-      { label: "Confidentialité", href: "/contact" },
-      { label: "Cookies", href: "/contact" },
-      { label: "Accessibilité", href: "/contact" },
+      { label: "Mentions légales", href: "/mentions-legales" },
+      { label: "CGV (site officiel)", href: "https://monboum.fr/cgv/", external: true },
+      { label: "Confidentialité", href: "https://monboum.fr/privacy-policy/", external: true },
+      { label: "Contact franchise", href: "mailto:franchise@monboum.fr", external: true },
     ],
   },
 ];
 
 export function Footer() {
   return (
-    <footer
+    <motion.footer
       className="relative pt-20 pb-8 border-t"
       style={{ backgroundColor: "var(--b-dark)", borderColor: "var(--b-border)" }}
       itemScope
       itemType="https://schema.org/Restaurant"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.6, ease: easeOutExpo }}
     >
       {/* Top accent line */}
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, var(--b-red) 30%, var(--b-yellow) 70%, transparent)" }} />
@@ -54,25 +62,23 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-3">
             <Link to="/" aria-label="Mon Boum — Accueil" className="inline-block mb-6">
-              <div
-                className="inline-flex items-center justify-center rounded-2xl border p-3"
-                style={{ borderColor: "var(--b-border)", backgroundColor: "rgba(255,255,255,0.97)" }}
-              >
-                <img
-                  src={logoMark}
-                  alt="Logo Mon Boum"
-                  className="h-14 w-auto object-contain sm:h-16"
-                  loading="lazy"
-                  itemProp="name"
-                />
-              </div>
-              <div className="text-xs uppercase tracking-[0.25em] mt-3" style={{ color: "var(--b-muted)" }}>
+              <img
+                src="/branding/footer-logo-boum.png"
+                alt="Mon Boum"
+                width={220}
+                height={80}
+                className="h-16 sm:h-20 w-auto max-w-full object-contain object-left"
+                itemProp="logo"
+                decoding="async"
+              />
+              <span className="sr-only" itemProp="name">Mon Boum</span>
+              <div className="font-franchise mt-3" style={{ color: "var(--b-muted)", fontSize: "0.85rem", letterSpacing: "0.08em" }}>
                 Le meilleur du street-food · Depuis 2004
               </div>
             </Link>
 
             <p className="mb-6 max-w-xs text-sm leading-relaxed" style={{ color: "var(--b-muted)" }} itemProp="description">
-              Pizzas au feu de bois, smash burgers, tacos halal. Fait avec passion depuis 2004, dans 5 villes françaises.
+              Pizzas au feu de bois, smash burgers, tacos halal. Fait avec passion depuis 2004, en région toulousaine.
             </p>
 
             {/* Social */}
@@ -134,6 +140,20 @@ export function Footer() {
               <ul className="space-y-3">
                 {col.links.map((link) => (
                   <li key={link.label}>
+                    {link.external === true ? (
+                      <a
+                        href={link.href}
+                        target={link.href.startsWith("mailto:") ? undefined : "_blank"}
+                        rel={link.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
+                        className="text-sm transition-all duration-200 hover:pl-2 flex items-center gap-1 group"
+                        style={{ color: "var(--b-muted)" }}
+                        onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "var(--b-white)")}
+                        onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "var(--b-muted)")}
+                      >
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs" style={{ color: "var(--b-red)" }}>→</span>
+                        {link.label}
+                      </a>
+                    ) : (
                     <Link
                       to={link.href}
                       className="text-sm transition-all duration-200 hover:pl-2 flex items-center gap-1 group"
@@ -144,6 +164,7 @@ export function Footer() {
                       <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs" style={{ color: "var(--b-red)" }}>→</span>
                       {link.label}
                     </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -151,8 +172,34 @@ export function Footer() {
           ))}
         </div>
 
+        {/* Mentions légales — résumé (détail sur /mentions-legales) */}
+        <div
+          className="pt-10 pb-6 border-t text-[0.65rem] sm:text-xs leading-relaxed max-w-4xl"
+          style={{ borderColor: "var(--b-border)", color: "var(--b-muted)" }}
+        >
+          <p className="mb-2">
+            <strong style={{ color: "rgba(240,237,232,0.85)" }}>Boum Burger SARL</strong>
+            {" — "}Capital 10 000,00 € — RCS Toulouse B 500 373 311 — SIREN 500 373 311
+            {" — "}220 Route de Saint-Simon, 31100 Toulouse
+            {" — "}Tél.{" "}
+            <a href="tel:0561407773" className="underline decoration-white/20 hover:text-white">05 61 40 77 73</a>
+            {" — "}
+            <a href="mailto:franchise@monboum.fr" className="underline decoration-white/20 hover:text-white">franchise@monboum.fr</a>
+          </p>
+          <p>
+            Hébergement : OVHcloud — 2 rue Kellermann, 59100 Roubaix, France.{" "}
+            <Link to="/mentions-legales" className="underline decoration-[var(--b-red)]/40 hover:text-white">
+              Mentions légales complètes
+            </Link>
+            {" · "}
+            <a href="https://monboum.fr/cgv/" target="_blank" rel="noopener noreferrer" className="underline decoration-[var(--b-red)]/40 hover:text-white">
+              CGV
+            </a>
+          </p>
+        </div>
+
         {/* Bottom bar */}
-        <div className="pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderColor: "var(--b-border)" }}>
+        <div className="pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderColor: "var(--b-border)" }}>
           <p className="text-xs" style={{ color: "var(--b-muted)" }}>
             © {new Date().getFullYear()} Mon Boum. Tous droits réservés. Fait avec ❤️ en France.
           </p>
@@ -162,6 +209,6 @@ export function Footer() {
           </div>
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 }

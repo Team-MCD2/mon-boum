@@ -15,7 +15,11 @@
   --b-muted:  #6b6b6b;
   --b-border: rgba(255,255,255,0.06);
   --b-grain-opacity: 0.055;
-  --nav-offset: clamp(96px, 10vw, 132px);
+  /* Clear fixed navbar + notches / Dynamic Island */
+  --nav-offset: max(
+    clamp(88px, 12vw, 132px),
+    calc(env(safe-area-inset-top, 0px) + 72px)
+  );
 }
 
 /* ─── Base reset ─────────────────────────────────────────── */
@@ -24,7 +28,7 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
-  cursor: none;
+  cursor: auto;
 }
 
 body {
@@ -32,11 +36,23 @@ body {
   color: var(--b-white);
   font-family: 'Plus Jakarta Sans', sans-serif;
   overflow-x: hidden;
-  cursor: none;
+  cursor: auto;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
-/* hide default cursor site-wide */
-a, button, [role="button"], input, select, textarea, label {
+/* Custom cursor only on capable desktop (see Root + .custom-cursor-active) */
+html.custom-cursor-active,
+html.custom-cursor-active body {
+  cursor: none;
+}
+html.custom-cursor-active a,
+html.custom-cursor-active button,
+html.custom-cursor-active [role="button"],
+html.custom-cursor-active input,
+html.custom-cursor-active select,
+html.custom-cursor-active textarea,
+html.custom-cursor-active label {
   cursor: none !important;
 }
 
@@ -95,28 +111,36 @@ a, button, [role="button"], input, select, textarea, label {
 .cursor-ring {
   position: fixed;
   top: 0; left: 0;
-  width: 40px; height: 40px;
+  width: 44px; height: 44px;
   border-radius: 50%;
-  border: 1.5px solid rgba(229,37,10,0.6);
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--b-black), var(--b-black)) padding-box,
+    linear-gradient(135deg, rgba(245,197,24,0.85), rgba(229,37,10,0.9)) border-box;
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%,-50%);
   transition: width 0.35s cubic-bezier(0.16,1,0.3,1),
               height 0.35s cubic-bezier(0.16,1,0.3,1),
               border-color 0.2s ease,
-              background 0.3s ease;
+              background 0.3s ease,
+              box-shadow 0.3s ease;
   will-change: transform;
+  box-shadow: 0 0 24px rgba(229,37,10,0.15);
 }
 
 .cursor-ring.hovering {
-  width: 80px; height: 80px;
-  border-color: var(--b-red);
-  background: rgba(229,37,10,0.08);
+  width: 84px; height: 84px;
+  background:
+    linear-gradient(rgba(229,37,10,0.12), rgba(229,37,10,0.12)) padding-box,
+    linear-gradient(135deg, var(--b-yellow), var(--b-red)) border-box;
+  box-shadow: 0 0 40px rgba(229,37,10,0.35);
 }
 
 .cursor-ring.clicking {
-  width: 28px; height: 28px;
-  background: rgba(229,37,10,0.25);
+  width: 30px; height: 30px;
+  background: rgba(229,37,10,0.35);
+  box-shadow: 0 0 20px rgba(229,37,10,0.5);
 }
 
 /* ─── Page transition overlay ────────────────────────────── */
@@ -164,12 +188,16 @@ a, button, [role="button"], input, select, textarea, label {
 
 /* ─── Card hover ─────────────────────────────────────────── */
 .card-lift {
-  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1),
-              box-shadow 0.5s cubic-bezier(0.16,1,0.3,1);
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
 }
 .card-lift:hover {
-  transform: translateY(-10px) scale(1.01);
-  box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(229,37,10,0.12);
+  transform: translateY(-8px);
+  box-shadow:
+    0 28px 56px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(229, 37, 10, 0.14);
 }
 
 /* ─── Image zoom ─────────────────────────────────────────── */
@@ -248,6 +276,47 @@ a, button, [role="button"], input, select, textarea, label {
   padding-top: var(--nav-offset);
 }
 
+.pt-safe {
+  padding-top: var(--nav-offset);
+}
+
+/* Hero: extra breathing room so headline never sits under the navbar */
+.hero-stack {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+}
+
+/* Fluid hero title: avoids collision with fixed nav on short viewports */
+.hero-title {
+  font-size: clamp(2.75rem, 11vw, 14rem);
+  line-height: 0.9;
+}
+
+@media (max-height: 640px) {
+  .hero-title {
+    font-size: clamp(2.5rem, 9vh, 6rem);
+  }
+}
+
+.validated-showcase .validated-card {
+  transition: border-color 0.35s ease, box-shadow 0.45s ease;
+}
+
+/* Intro preface loader — CSS only so AnimatePresence exit is never blocked */
+@keyframes preface-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(320%); }
+}
+.preface-loader-bar {
+  background: linear-gradient(90deg, var(--b-yellow), var(--b-red));
+  animation: preface-shimmer 1.6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .preface-loader-bar {
+    animation: none;
+    transform: translateX(40%);
+  }
+}
+
 /* ─── Number ticker ──────────────────────────────────────── */
 @keyframes count-up {
   from { opacity: 0; transform: translateY(20px); }
@@ -279,3 +348,29 @@ a, button, [role="button"], input, select, textarea, label {
   height: 1px;
   background: var(--b-border);
 }
+
+/* ─── Torn paper section edge (monboum.fr style) ─────────── */
+.torn-paper-divider {
+  height: clamp(18px, 3.5vw, 36px);
+  width: 100%;
+  background-image: url("/branding/welcome-grunge.png");
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+  background-position: center top;
+  opacity: 0.95;
+}
+
+/* Playful franchise accent */
+.font-franchise {
+  font-family: "Bangers", "Bebas Neue", sans-serif;
+  letter-spacing: 0.06em;
+  font-weight: 400;
+}
+
+.retro-sticker {
+  box-shadow:
+    4px 4px 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+  transform: rotate(-1.5deg);
+}
+
