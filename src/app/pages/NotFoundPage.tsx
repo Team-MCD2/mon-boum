@@ -2,9 +2,17 @@ import { Link } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { MagneticButton } from "../components/MagneticButton";
+import { SeoHead } from "../components/SeoHead";
 
 export function NotFoundPage() {
   return (
+    <>
+      <SeoHead
+        title="Page introuvable — Mon Boum"
+        description="Cette page n'existe pas. Retournez à l'accueil Mon Boum — street-food halal à Toulouse."
+        noIndex
+        ogImagePath="/favicon.png"
+      />
     <section
       className="min-h-screen flex flex-col items-center justify-center text-center px-4"
       style={{ backgroundColor: "var(--b-black)" }}
@@ -22,7 +30,7 @@ export function NotFoundPage() {
         >
           4<span style={{ color: "var(--b-red)", textShadow: "0 0 100px rgba(229,37,10,0.5)" }}>0</span>4
         </div>
-        <p className="mb-2 font-display text-white" style={{ fontSize: "1.5rem", letterSpacing: "0.1em" }}>PAGE INTROUVABLE</p>
+        <p className="mb-2 font-display" style={{ fontSize: "1.5rem", letterSpacing: "0.1em", color: "var(--b-white)" }}>PAGE INTROUVABLE</p>
         <p className="mb-10 text-sm max-w-xs mx-auto" style={{ color: "var(--b-muted)" }}>
           Aïe ! Cette page a disparu comme notre dernière frite. Elle n'existe pas (ou plus).
         </p>
@@ -39,5 +47,6 @@ export function NotFoundPage() {
         </MagneticButton>
       </motion.div>
     </section>
+    </>
   );
 }

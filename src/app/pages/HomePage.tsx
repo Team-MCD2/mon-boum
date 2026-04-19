@@ -1,15 +1,21 @@
 import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { motion, useInView, useScroll, useTransform, useSpring } from "motion/react";
-import { ArrowRight, Star, Award, MapPin, ArrowUpRight, Quote, Instagram, Store, Truck, Smartphone, ShieldCheck, ThumbsUp } from "lucide-react";
+import { ArrowRight, Star, Award, MapPin, ArrowUpRight, Quote, Instagram, Store, Truck, Smartphone, ShieldCheck, ThumbsUp, ShoppingBag } from "lucide-react";
 import { SplitText } from "../components/SplitText";
 import { MagneticButton } from "../components/MagneticButton";
 import { CountUp } from "../components/CountUp";
 import { Marquee } from "../components/Marquee";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { TornPaperDivider } from "../components/TornPaperDivider";
-import { useCart } from "../context/CartContext";
 import { easeOutExpo } from "../lib/motionPresets";
+import { siteConfig } from "../config/siteConfig";
+import { CelebritySlider } from "../components/CelebritySlider";
+import { GlobalFaq } from "../components/GlobalFaq";
+import { SeoHead } from "../components/SeoHead";
+import { HalalTrustSection } from "../components/HalalTrustSection";
+import { TikTokSocialBlock } from "../components/TikTokSocialBlock";
+import { VideoHero } from "../components/VideoHero";
 
 /* ─── Image URLs ─────────────────────────────────────────── */
 const IMG = {
@@ -42,10 +48,10 @@ const testimonials = [
 ];
 
 const brandFamily = [
-  { name: "Boum Burger", since: "Depuis 2008", desc: "Smash burgers, tacos & assiettes", href: "/menu#burgers", logo: "/branding/Boum-Burgers.png" },
-  { name: "Boum Pizz's", since: "Depuis 2015", desc: "Pizzas feu de bois signatures", href: "/menu#pizza", logo: "/branding/BOUM-Pizzs.png" },
-  { name: "Boum Chicken", since: "Depuis 2019", desc: "Fried chicken et tenders maison", href: "/menu#chicken", logo: "/branding/Boum-Chicken.png" },
-  { name: "Boum Tacos", since: "Halal", desc: "Tacos généreux & sauces maison", href: "/menu#tacos", logo: "/branding/Boums.png" },
+  { name: "Boum Burger", since: "Depuis 2008", desc: "Smash burgers, tacos & assiettes", href: "/boum-burger", logo: "/branding/Boum-Burgers.png" },
+  { name: "Boum Pizz's", since: "Depuis 2015", desc: "Pizzas feu de bois signatures", href: "/boum-pizzs", logo: "/branding/BOUM-Pizzs.png" },
+  { name: "Boum Chicken", since: "Depuis 2019", desc: "Fried chicken et tenders maison", href: "/boum-chicken", logo: "/branding/Boum-Chicken.png" },
+  { name: "Boum Saveurs", since: "Groupe", desc: "Le meilleur du street-food réuni", href: "/boum-saveurs", logo: "/branding/Boum-Saveurs.png" },
 ];
 
 const deliverySteps = [
@@ -60,8 +66,18 @@ const qualityPillars = [
   { label: "Préparation à la minute", icon: Star },
 ];
 
+type CelebrityEntry = {
+  id: string;
+  name: string;
+  role: string;
+  img: string;
+  quote: string;
+  /** e.g. source line for archive / relayed quotes */
+  attribution?: string;
+};
+
 /** Ils nous ont validé — aligné sur monboum.fr (citations officielles du site) */
-const celebrityQuotes = [
+const celebrityQuotes: CelebrityEntry[] = [
   { id: "ninho", name: "Ninho", role: "Artiste / Rappeur", img: "/branding/Ninho.jpg", quote: "Boum Burger, c'était lourd !!! Je recommande, Toulouse. On est ensemble 😉" },
   { id: "dadju", name: "Dadju", role: "Artiste / Chanteur", img: "/branding/Dadju.jpg", quote: "Un accueil et un repas au top. Merci Boum Burger 🙂" },
   { id: "oli", name: "Oli (Big Flo & Oli)", role: "Artiste / Chanteur", img: "/branding/Oli.jpg", quote: "Boum Burger, on est ensemble la famille 😉" },
@@ -70,16 +86,24 @@ const celebrityQuotes = [
   { id: "algerino", name: "L'Algerino", role: "Artiste / Chanteur", img: "/branding/Algerino.jpg", quote: "Une équipe au top et des burgers de malade ! On est ensemble ;" },
   { id: "marwa", name: "Marwa Loud", role: "Artiste / Chanteuse", img: "/branding/Marwa.jpg", quote: "C'était super, gros big up à la Boum Team 🙂" },
   { id: "tayc", name: "Tayc", role: "Artiste / Chanteur", img: "/branding/Tayc.jpg", quote: "Merci la famille, on est ensemble !" },
+  {
+    id: "ribery",
+    name: "Franck Ribéry",
+    role: "Sport / Médias",
+    img: IMG.double,
+    quote: "Merci à toute l'équipe Mon Boum pour l'accueil — belle énergie à Toulouse.",
+    attribution: "Citation relayée sur monboum.fr",
+  },
   { id: "chily", name: "Chily", role: "Chanteur", img: "/branding/CHILY_FIFOU1350.jpg", quote: "Maximum de force à la team Boum 🙂" },
   { id: "mario", name: "Mario (Emile et Image)", role: "Chanteur / Musicien", img: "/branding/Mario.jpg", quote: "Un super moment, un délice! Merci Boum 😉" },
   { id: "landy", name: "Landy", role: "Artiste / Rappeur", img: "/branding/LANDY.png", quote: "En direct de Toulouse, j'ai mangé franchement c'était lourd !!! N'hésitez pas à venir ici, c'est un beau resto 😉" },
-] as const;
+];
 
 const compareBrands = [
-  { name: "Boum Burger", href: "/menu#burgers", blurb: "Smash, sauces maison, le classique qui claque.", logo: "/branding/Boum-Burgers.png" },
-  { name: "BOUM Pizza", href: "/menu#pizza", blurb: "Four à bois, pâte fine, généreux.", logo: "/branding/BOUM-Pizzs.png" },
-  { name: "Boum Chicken", href: "/menu#chicken", blurb: "Croustillant, marinades maison.", logo: "/branding/Boum-Chicken.png" },
-  { name: "Boum Saveurs", href: "/menu", blurb: "Le meilleur du street-food réuni.", logo: "/branding/Boum-Saveurs.png" },
+  { name: "Boum Burger", href: "/boum-burger", blurb: "Smash, sauces maison, le classique qui claque.", logo: "/branding/Boum-Burgers.png" },
+  { name: "Boum Pizz's", href: "/boum-pizzs", blurb: "Four à bois, pâte fine, généreux.", logo: "/branding/BOUM-Pizzs.png" },
+  { name: "Boum Chicken", href: "/boum-chicken", blurb: "Croustillant, marinades maison.", logo: "/branding/Boum-Chicken.png" },
+  { name: "Boum Saveurs", href: "/boum-saveurs", blurb: "Le meilleur du street-food réuni.", logo: "/branding/Boum-Saveurs.png" },
 ] as const;
 
 /* ─── Sub-components ─────────────────────────────────────── */
@@ -107,7 +131,7 @@ function CategoryCard({ cat, index }: { cat: { label: string; sub: string; img: 
             className="w-full h-full object-cover img-inner"
           />
         </motion.div>
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(6,6,6,1) 0%, rgba(6,6,6,0.4) 50%, rgba(6,6,6,0.1) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, var(--hero-overlay-bottom) 0%, var(--hero-overlay-mid) 50%, var(--hero-overlay-top) 100%)" }} />
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "rgba(229,37,10,0.15)" }} />
       </div>
       <div className="relative z-10 p-8 w-full">
@@ -137,7 +161,6 @@ function CategoryCard({ cat, index }: { cat: { label: string; sub: string; img: 
 }
 
 function FeaturedCard({ item, index }: { item: typeof featured[0]; index: number }) {
-  const { add } = useCart();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
@@ -160,13 +183,13 @@ function FeaturedCard({ item, index }: { item: typeof featured[0]; index: number
           className="w-full h-full object-cover img-inner"
           itemProp="image"
         />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(6,6,6,0.9) 0%, transparent 55%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, var(--hero-overlay-bottom) 0%, transparent 55%)" }} />
 
         {/* Category badge */}
         <div className="absolute top-4 left-4">
           <span
             className="inline-block px-3 py-1 rounded-full text-xs uppercase tracking-widest"
-            style={{ backgroundColor: "rgba(6,6,6,0.7)", color: "var(--b-muted)", fontWeight: 700, backdropFilter: "blur(8px)", border: "1px solid var(--b-border)" }}
+            style={{ backgroundColor: "var(--glass-surface)", color: "var(--b-white)", fontWeight: 700, backdropFilter: "blur(8px)", border: "1px solid var(--b-border)" }}
           >
             {item.cat}
           </span>
@@ -198,118 +221,23 @@ function FeaturedCard({ item, index }: { item: typeof featured[0]; index: number
           {item.name}
         </h3>
         <p className="text-xs flex-1 mb-4" style={{ color: "var(--b-muted)" }} itemProp="description">{item.desc}</p>
-        <button
-          onClick={() => add({ id: item.id, name: item.name, price: item.price, img: item.img, tag: item.tag })}
-          className="w-full py-3 rounded-full text-xs uppercase tracking-wider transition-all duration-300 hover:scale-105 btn-shine"
+        <a
+          href={siteConfig.ordering.deliverooToulouse}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full text-xs uppercase tracking-[0.18em] text-center whitespace-nowrap transition-all duration-300 hover:scale-[1.02] btn-shine"
           style={{ backgroundColor: "var(--b-red)", color: "white", fontWeight: 700 }}
-          aria-label={`Ajouter ${item.name} au panier`}
+          aria-label={`Commander ${item.name} sur Deliveroo`}
         >
-          + Ajouter au panier
-        </button>
+          <ShoppingBag size={14} />
+          Commander
+        </a>
       </div>
     </motion.article>
   );
 }
 
-function CelebrityCard({
-  c,
-  index,
-  active,
-  onActivate,
-}: {
-  c: (typeof celebrityQuotes)[number];
-  index: number;
-  active: boolean;
-  onActivate: () => void;
-}) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
-  return (
-    <motion.article
-      ref={ref}
-      initial={{ opacity: 0, y: 28 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ delay: (index % 4) * 0.05, duration: 0.5, ease: easeOutExpo }}
-      className={`validated-card relative rounded-2xl overflow-hidden border flex flex-col h-full card-lift ${
-        active ? "ring-2 ring-[var(--b-yellow)]/50 shadow-[0_0_0_1px_rgba(229,37,10,0.25)]" : ""
-      }`}
-      style={{
-        backgroundColor: "var(--b-card)",
-        borderColor: active ? "rgba(245,197,24,0.35)" : "var(--b-border)",
-      }}
-    >
-      {active && (
-        <motion.div
-          className="absolute inset-0 pointer-events-none z-[1]"
-          style={{
-            background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(229,37,10,0.12), transparent 55%)",
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-        />
-      )}
-      <button
-        type="button"
-        onClick={onActivate}
-        className="text-left w-full flex flex-col flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--b-yellow)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--b-card)] rounded-2xl"
-        aria-pressed={active}
-      >
-        <div className="relative aspect-[4/3] overflow-hidden">
-          <motion.div
-            className="w-full h-full"
-            animate={active ? { scale: 1.06 } : { scale: 1 }}
-            transition={{ duration: 0.55, ease: easeOutExpo }}
-          >
-            <ImageWithFallback src={c.img} alt={c.name} className="w-full h-full object-cover" />
-          </motion.div>
-          <div
-            className="absolute inset-0"
-            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.15) 50%, transparent 100%)" }}
-          />
-          <div className="absolute top-3 right-3 z-[2]">
-            <motion.span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6rem] uppercase tracking-widest font-bold"
-              style={{
-                backgroundColor: active ? "var(--b-yellow)" : "rgba(6,6,6,0.65)",
-                color: active ? "var(--b-black)" : "var(--b-muted)",
-                border: "1px solid var(--b-border)",
-              }}
-            >
-              <Star size={10} fill="currentColor" className="shrink-0" aria-hidden />
-              {active ? "Spotlight" : "Voir"}
-            </motion.span>
-          </div>
-          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2 z-[2]">
-            <div>
-              <div className="font-franchise text-xl sm:text-2xl leading-none text-white drop-shadow-md">
-                {c.name}
-              </div>
-              <div className="text-[0.65rem] uppercase tracking-widest mt-1" style={{ color: "var(--b-yellow)", fontWeight: 700 }}>
-                {c.role}
-              </div>
-            </div>
-            <Quote size={22} className="opacity-50 shrink-0 text-white" aria-hidden />
-          </div>
-        </div>
-        <div className="p-4 sm:p-5 flex-1 flex flex-col relative z-[2]">
-          <p className="text-xs sm:text-sm leading-relaxed flex-1" style={{ color: "rgba(240,237,232,0.88)" }}>
-            “{c.quote}”
-          </p>
-          <div className="mt-4 pt-4 border-t flex items-center justify-between gap-2" style={{ borderColor: "var(--b-border)" }}>
-            <span className="text-[0.65rem] uppercase tracking-widest flex items-center gap-1.5" style={{ color: "var(--b-muted)", fontWeight: 700 }}>
-              <Star size={14} fill="var(--b-yellow)" style={{ color: "var(--b-yellow)" }} aria-hidden />
-              Validé
-            </span>
-            <span className="text-[0.6rem] uppercase tracking-wider" style={{ color: "var(--b-red)" }}>
-              {active ? "En avant" : "Cliquer"}
-            </span>
-          </div>
-        </div>
-      </button>
-    </motion.article>
-  );
-}
+
 
 function TestimonialItem({ t, active }: { t: typeof testimonials[0]; active: boolean }) {
   return (
@@ -328,13 +256,13 @@ function TestimonialItem({ t, active }: { t: typeof testimonials[0]; active: boo
       </div>
       <p
         className="mb-8 leading-relaxed max-w-2xl"
-        style={{ fontSize: "clamp(1rem, 2vw, 1.35rem)", color: "rgba(240,237,232,0.85)", fontStyle: "italic" }}
+        style={{ fontSize: "clamp(1rem, 2vw, 1.35rem)", color: "var(--text-soft-85)", fontStyle: "italic" }}
         itemProp="reviewBody"
       >
         "{t.text}"
       </p>
       <div>
-        <div className="font-display text-white" style={{ fontSize: "1.2rem", letterSpacing: "0.1em" }}>{t.author}</div>
+        <div className="font-display" style={{ fontSize: "1.2rem", letterSpacing: "0.1em", color: "var(--b-white)" }}>{t.author}</div>
         <div className="text-xs flex items-center justify-center gap-1 mt-1" style={{ color: "var(--b-muted)" }}>
           <MapPin size={11} />{t.location}
         </div>
@@ -366,7 +294,7 @@ function ParallaxImage({ src, alt, speed = 0.15 }: { src: string; alt: string; s
 
 /* ─── HomePage ───────────────────────────────────────────── */
 export function HomePage() {
-  const heroRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement | null>(null);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [celebSpotlight, setCelebSpotlight] = useState(0);
 
@@ -381,52 +309,43 @@ export function HomePage() {
     return () => clearInterval(t);
   }, []);
 
-  // Hero parallax
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(heroScroll, [0, 1], ["0%", "30%"]);
   const heroOpacity = useTransform(heroScroll, [0, 0.6], [1, 0]);
 
   return (
     <>
-      <title>Mon Boum — Le Meilleur du Street-Food depuis 2004 | Pizza · Burger · Tacos</title>
+      <SeoHead
+        title="Mon Boum — Le meilleur du street-food depuis 2004 | Pizza · Burger · Tacos"
+        description="Mon Boum — street-food halal depuis 2004 à Toulouse et métropole. Boum Burger, Boum Chicken, Boum Pizz's, Boum Saveurs. Livraison Deliveroo."
+        keywords={siteConfig.seo.defaultKeywords}
+        ogImagePath="/favicon.png"
+      />
 
       {/* ══════════════════════════════════════════════════
-          HERO — Full-screen cinematic
+          HERO — TikTok embed + poster (clip @boumchickentoulouse)
       ══════════════════════════════════════════════════ */}
-      <section
+      <VideoHero
         ref={heroRef}
-        className="relative flex flex-col justify-end overflow-hidden top-safe"
-        style={{ height: "100svh", minHeight: "600px", backgroundColor: "var(--b-black)" }}
-        aria-label="Héros — Mon Boum street-food"
+        posterSrc={IMG.hero}
+        videoSrc={siteConfig.tiktokVideos.homeHero}
+        localVideoBase="/videos/boum-burger"
+        alt="Héros — Mon Boum street-food"
+        minHeight="min-h-[100svh] min-h-[640px]"
+        className="top-safe"
       >
-        {/* BG image parallax */}
-        <div className="absolute inset-0">
-          <motion.div style={{ y: heroY }} className="absolute inset-0">
-            <ImageWithFallback
-              src={IMG.hero}
-              alt="Cuisine urbaine Mon Boum — street food"
-              className="w-full h-full object-cover"
-              style={{ transform: "scale(1.1)" }}
-            />
-          </motion.div>
-          <div
-            className="absolute inset-0"
-            style={{ background: "linear-gradient(to top, rgba(6,6,6,1) 10%, rgba(6,6,6,0.6) 50%, rgba(6,6,6,0.2) 100%)" }}
-          />
-        </div>
-
         {/* Ambient glow — subtle pulse */}
         <motion.div
-          className="absolute bottom-1/3 left-1/4 w-[min(24rem,50vw)] h-[min(24rem,50vw)] rounded-full blur-[120px] pointer-events-none"
+          className="pointer-events-none absolute bottom-1/3 left-1/4 z-0 w-[min(24rem,50vw)] h-[min(24rem,50vw)] rounded-full blur-[120px]"
           style={{ backgroundColor: "rgba(229,37,10,0.16)" }}
           animate={{ opacity: [0.55, 0.95, 0.55], scale: [1, 1.06, 1] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden
         />
 
         {/* Main content */}
         <motion.div
           style={{ opacity: heroOpacity }}
-          className="relative z-10 hero-stack max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 pb-12 sm:pb-16 w-full"
+          className="relative z-[1] hero-stack w-full max-w-7xl mx-auto pb-4 sm:pb-8"
         >
           {/* Tag line — no hero logo (brand mark stays in navbar) */}
           <motion.div
@@ -460,7 +379,7 @@ export function HomePage() {
                     className="block"
                   >
                     {wi === 1 ? (
-                      <>DU <span style={{ color: "var(--b-red)", textShadow: "0 0 80px rgba(229,37,10,0.4)" }}>STREET</span>-FOOD</>
+                      <>MEILLEUR DU <span style={{ color: "var(--b-red)", textShadow: "0 0 80px rgba(229,37,10,0.4)" }}>STREET</span>-FOOD</>
                     ) : word}
                   </motion.span>
                 </span>
@@ -475,30 +394,42 @@ export function HomePage() {
             transition={{ delay: 0.75, duration: 0.7 }}
             className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mt-6"
           >
-            <p className="max-w-md text-sm sm:text-base leading-relaxed font-franchise" style={{ color: "rgba(240,237,232,0.75)", letterSpacing: "0.04em" }}>
+            <p className="max-w-md text-sm sm:text-base leading-relaxed font-franchise" style={{ color: "var(--text-soft-75)", letterSpacing: "0.04em" }}>
               Pizza · Burger · Tacos — le street-food qui fait boum !<br />
               <span className="text-white/55 font-sans text-xs sm:text-sm tracking-normal not-italic font-medium">
-                Qualité, générosité, et une team au taquet.
+                {siteConfig.claims.pioneer} {siteConfig.claims.halalShort}
               </span>
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <MagneticButton>
-                <Link
-                  to="/menu"
+                <a
+                  href={siteConfig.ordering.deliverooToulouse}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2.5 px-7 py-4 rounded-full text-sm uppercase tracking-widest btn-shine transition-all"
                   style={{ backgroundColor: "var(--b-red)", color: "white", fontWeight: 700 }}
-                  aria-label="Voir le menu Mon Boum"
+                  aria-label="Commander sur Deliveroo Toulouse"
                 >
-                  Commander
+                  Deliveroo
                   <ArrowRight size={15} />
+                </a>
+              </MagneticButton>
+              <MagneticButton>
+                <Link
+                  to="/nos-restaurants"
+                  className="inline-flex items-center gap-2.5 px-7 py-4 rounded-full text-sm uppercase tracking-widest border transition-all"
+                  style={{ borderColor: "var(--text-soft-20)", color: "var(--b-white)", fontWeight: 600 }}
+                  aria-label="Voir nos restaurants"
+                >
+                  Nos Restaurants
                 </Link>
               </MagneticButton>
               <MagneticButton>
                 <Link
-                  to="/restaurants"
+                  to="/nos-restaurants"
                   className="inline-flex items-center gap-2 px-7 py-4 rounded-full text-sm uppercase tracking-widest border transition-all"
-                  style={{ borderColor: "rgba(240,237,232,0.2)", color: "var(--b-white)", fontWeight: 600 }}
-                  aria-label="Trouver un restaurant"
+                  style={{ borderColor: "var(--text-soft-20)", color: "var(--b-white)", fontWeight: 600 }}
+                  aria-label="Trouver un restaurant à Toulouse"
                 >
                   <MapPin size={15} style={{ color: "var(--b-yellow)" }} />
                   Nous trouver
@@ -506,6 +437,28 @@ export function HomePage() {
               </MagneticButton>
             </div>
           </motion.div>
+
+          <p className="mt-4 text-center sm:text-left">
+            <a
+              href={siteConfig.tiktokVideos.homeHero}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[0.65rem] uppercase tracking-widest font-semibold link-inline-muted"
+              style={{ color: "var(--b-muted)" }}
+            >
+              Voir le clip sur TikTok (@boumchickentoulouse)
+            </a>
+            {" · "}
+            <a
+              href={siteConfig.social.tiktok}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[0.65rem] uppercase tracking-widest font-semibold link-inline-muted"
+              style={{ color: "var(--b-muted)" }}
+            >
+              @monboum
+            </a>
+          </p>
 
           {/* Scroll indicator */}
           <motion.div
@@ -568,7 +521,7 @@ export function HomePage() {
             </motion.div>
           </motion.div>
         </motion.div>
-      </section>
+      </VideoHero>
 
       {/* ══════════════════════════════════════════════════
           MARQUEE TICKER
@@ -582,6 +535,8 @@ export function HomePage() {
       </div>
 
       <TornPaperDivider />
+
+      <HalalTrustSection />
 
       {/* ══════════════════════════════════════════════════
           BOUM TEAM — Brand family grid
@@ -731,18 +686,19 @@ export function HomePage() {
         style={{ backgroundColor: "var(--b-black)" }}
         aria-label="Nos catégories street-food"
       >
-        <div className="grid grid-cols-1 md:grid-cols-3" style={{ minHeight: "60vh" }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ minHeight: "60vh" }}>
           {[
-            { label: "PIZZA", sub: "Four à bois", img: IMG.pizza, href: "/menu#pizza", logoUrl: "/branding/BOUM-Pizzs.png" },
-            { label: "BURGER", sub: "Smash beef", img: IMG.burger, href: "/menu#burgers", logoUrl: "/branding/Boum-Burgers.png" },
-            { label: "TACOS", sub: "Halal", img: IMG.tacos, href: "/menu#tacos", logoUrl: "/branding/Boums.png" },
+            { label: "PIZZ'S", sub: "Four à bois", img: IMG.pizza, href: "/boum-pizzs", logoUrl: "/branding/BOUM-Pizzs.png" },
+            { label: "BURGER", sub: "Smash beef", img: IMG.burger, href: "/boum-burger", logoUrl: "/branding/Boum-Burgers.png" },
+            { label: "CHICKEN", sub: "Fried crispy", img: IMG.chicken, href: "/boum-chicken", logoUrl: "/branding/Boum-Chicken.png" },
+            { label: "SAVEURS", sub: "Tacos halal", img: IMG.tacos, href: "/boum-saveurs", logoUrl: "/branding/Boum-Saveurs.png" },
           ].map((cat, i) => (
             <CategoryCard key={cat.label} cat={cat} index={i} />
           ))}
         </div>
       </section>
 
-      <TornPaperDivider flip />
+      <TornPaperDivider />
 
       {/* ══════════════════════════════════════════════════
           FEATURED MENU — 4 cards
@@ -851,7 +807,7 @@ export function HomePage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-sm leading-relaxed mb-4" style={{ color: "rgba(240,237,232,0.65)" }}>
+                <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--text-soft-75)" }}>
                   {b.blurb}
                 </p>
                 <span className="inline-flex items-center gap-1 text-xs font-franchise" style={{ color: "var(--b-red)" }}>
@@ -878,7 +834,7 @@ export function HomePage() {
         <ParallaxImage src={IMG.flame} alt="Smash burger en train d'être préparé à feu vif" />
         <div
           className="absolute inset-0 flex items-center justify-center text-center px-4"
-          style={{ background: "rgba(6,6,6,0.6)" }}
+          style={{ background: "var(--hero-overlay-bottom)" }}
         >
           <div>
             <motion.div
@@ -893,7 +849,7 @@ export function HomePage() {
                 style={{ fontSize: "clamp(4rem, 13vw, 11rem)", lineHeight: 0.85, letterSpacing: "0.02em" }}
               >
                 SMASHÉ<br />
-                <span className="text-stroke" style={{ WebkitTextStroke: "2px rgba(240,237,232,0.5)" }}>À LA</span><br />
+                <span className="text-stroke" style={{ WebkitTextStroke: "2px var(--text-soft-50)" }}>À LA</span><br />
                 <span style={{ color: "var(--b-red)" }}>PERFECTION</span>
               </h2>
               <MagneticButton>
@@ -932,7 +888,7 @@ export function HomePage() {
                 {/* Large top-left */}
                 <div className="col-span-8 row-span-2 rounded-2xl overflow-hidden img-zoom relative">
                   <ImageWithFallback src={IMG.interior} alt="Restaurant Mon Boum ambiance" className="w-full h-full object-cover img-inner" />
-                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(6,6,6,0.5), transparent 60%)" }} />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, var(--hero-overlay-mid), transparent 60%)" }} />
                 </div>
                 {/* Top right */}
                 <div className="col-span-4 rounded-2xl overflow-hidden img-zoom">
@@ -982,7 +938,7 @@ export function HomePage() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.3, duration: 0.7 }}
                 className="mb-4 leading-relaxed"
-                style={{ color: "rgba(240,237,232,0.55)", fontSize: "0.95rem" }}
+                style={{ color: "var(--text-soft-75)", fontSize: "0.95rem" }}
                 itemProp="description"
               >
                 Depuis 2004, le groupe Mon Boum est présent sur la région toulousaine avec une conviction simple : le street-food peut être extraordinaire. Pas de compromis — des ingrédients frais, des recettes authentiques, et une passion qui ne faiblit jamais.
@@ -993,7 +949,7 @@ export function HomePage() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.4, duration: 0.7 }}
                 className="mb-10 leading-relaxed"
-                style={{ color: "rgba(240,237,232,0.55)", fontSize: "0.95rem" }}
+                style={{ color: "var(--text-soft-75)", fontSize: "0.95rem" }}
               >
                 Aujourd'hui, 8 restaurants sur la région toulousaine portent ce manifeste : pizza au feu de bois, burgers smashés à la commande, tacos montés avec générosité.
               </motion.p>
@@ -1016,7 +972,7 @@ export function HomePage() {
 
               <MagneticButton>
                 <Link
-                  to="/restaurants"
+                  to="/nos-restaurants"
                   className="inline-flex items-center gap-2 text-sm uppercase tracking-widest group"
                   style={{ color: "var(--b-yellow)", fontWeight: 700 }}
                   aria-label="Nos restaurants Mon Boum"
@@ -1037,7 +993,7 @@ export function HomePage() {
         <Marquee
           items={["Fait maison", "Ingrédients frais", "Livraison 30 min", "Click & Collect", "Ouvert 7j/7", "Depuis 2004"]}
           size="sm"
-          accentColor="rgba(255,255,255,0.4)"
+          accentColor="var(--text-soft-50)"
         />
       </div>
 
@@ -1089,7 +1045,11 @@ export function HomePage() {
               Validé
             </motion.p>
             <p className="mt-6 text-sm sm:text-base leading-relaxed px-2" style={{ color: "var(--b-muted)" }}>
-              Des artistes qui ont passé à la table — citations reprises du site officiel Mon Boum.
+              Artistes ayant partagé un mot sur Mon Boum — extraits alignés sur{" "}
+              <a href="https://monboum.fr" target="_blank" rel="noopener noreferrer" className="link-inline">
+                monboum.fr
+              </a>
+              .
             </p>
           </motion.div>
 
@@ -1101,17 +1061,7 @@ export function HomePage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-            {celebrityQuotes.map((c, i) => (
-              <CelebrityCard
-                key={c.id}
-                c={c}
-                index={i}
-                active={i === celebSpotlight}
-                onActivate={() => setCelebSpotlight(i)}
-              />
-            ))}
-          </div>
+          <CelebritySlider celebrities={celebrityQuotes} intervalMs={7000} />
         </div>
       </section>
 
@@ -1130,7 +1080,7 @@ export function HomePage() {
         {/* BG number */}
         <div
           className="absolute inset-0 flex items-center justify-center font-display pointer-events-none select-none"
-          style={{ fontSize: "30vw", color: "rgba(255,255,255,0.02)", letterSpacing: "-0.05em" }}
+          style={{ fontSize: "30vw", color: "var(--text-soft-20)", opacity: 0.06, letterSpacing: "-0.05em" }}
           aria-hidden="true"
         >
           {String(activeTestimonial + 1).padStart(2, "0")}
@@ -1182,6 +1132,8 @@ export function HomePage() {
         </div>
       </section>
 
+      <TikTokSocialBlock videoId={siteConfig.seo.tiktokFeaturedVideoId} title="Le TikTok @monboum" />
+
       {/* ══════════════════════════════════════════════════
           INSTAGRAM GRID
       ══════════════════════════════════════════════════ */}
@@ -1200,7 +1152,7 @@ export function HomePage() {
               mode="chars"
             />
             <a
-              href="https://instagram.com/monboum"
+              href={siteConfig.social.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden md:flex items-center gap-2 text-sm uppercase tracking-widest group"
@@ -1219,7 +1171,7 @@ export function HomePage() {
           {[IMG.burger, IMG.pizza, IMG.tacos, IMG.fries, IMG.chicken, IMG.shake, IMG.interior, IMG.double, IMG.neon, IMG.food].map((img, i) => (
             <motion.a
               key={i}
-              href="https://instagram.com/monboum"
+              href={siteConfig.social.instagram}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -1238,6 +1190,8 @@ export function HomePage() {
           ))}
         </div>
       </section>
+
+      <GlobalFaq />
 
       {/* ══════════════════════════════════════════════════
           NEWSLETTER CTA — Full-width red
@@ -1283,7 +1237,7 @@ export function HomePage() {
               required
               aria-label="Adresse e-mail"
               className="flex-1 px-5 py-4 rounded-full text-sm outline-none"
-              style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.3)" }}
+              style={{ backgroundColor: "var(--glass-surface)", color: "var(--b-white)", border: "1px solid var(--b-border)" }}
             />
             <MagneticButton>
               <button

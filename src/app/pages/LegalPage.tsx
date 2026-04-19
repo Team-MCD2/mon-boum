@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { Link } from "react-router";
 import { ExternalLink } from "lucide-react";
 import { easeOutExpo } from "../lib/motionPresets";
+import { SeoHead } from "../components/SeoHead";
 
 /** Identité légale alignée sur les CGV publiées sur monboum.fr (extrait article 1) */
 const company = {
@@ -29,7 +30,12 @@ const company = {
 export function LegalPage() {
   return (
     <>
-      <title>Mentions légales — Mon Boum</title>
+      <SeoHead
+        title="Mentions légales — Mon Boum"
+        description="Mentions légales Boum Burger SARL — siège Toulouse, RCS, hébergeur. Informations conformes aux CGV monboum.fr."
+        keywords="Mon Boum, mentions légales, Boum Burger SARL, Toulouse"
+        ogImagePath="/favicon.png"
+      />
 
       <section
         className="pt-safe pb-16 sm:pb-24 min-h-[70vh]"
@@ -49,7 +55,7 @@ export function LegalPage() {
               Mentions légales
             </h1>
 
-            <div className="space-y-10 text-sm leading-relaxed" style={{ color: "rgba(240,237,232,0.75)" }}>
+            <div className="space-y-10 text-sm leading-relaxed" style={{ color: "var(--text-soft-75)" }}>
               <section>
                 <h2 className="font-display text-xl mb-4" style={{ color: "var(--b-white)" }}>Éditeur du site</h2>
                 <p className="mb-2"><strong style={{ color: "var(--b-white)" }}>{company.name}</strong></p>
@@ -63,13 +69,13 @@ export function LegalPage() {
                   </li>
                   <li>
                     Tél. :{" "}
-                    <a href={`tel:${company.phone.replace(/\s/g, "")}`} className="underline decoration-[var(--b-red)]/50 hover:text-white">
+                    <a href={`tel:${company.phone.replace(/\s/g, "")}`} className="link-inline">
                       {company.phone}
                     </a>
                   </li>
                   <li>
                     E-mail :{" "}
-                    <a href={`mailto:${company.email}`} className="underline decoration-[var(--b-red)]/50 hover:text-white">
+                    <a href={`mailto:${company.email}`} className="link-inline">
                       {company.email}
                     </a>
                   </li>

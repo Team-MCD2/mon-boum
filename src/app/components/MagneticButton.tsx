@@ -19,7 +19,7 @@ export function MagneticButton({
   className = "",
   style,
   strength = 0.35,
-  as: Tag = "button",
+  as: Tag = "div",
   ...props
 }: MagneticButtonProps) {
   const ref = useRef<HTMLDivElement>(null);

@@ -1,19 +1,45 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown } from "lucide-react";
+import { siteConfig } from "../config/siteConfig";
 
 const quickFaq = [
   {
-    q: "Proposez-vous la livraison ?",
-    a: "Oui. Livraison et click & collect sont disponibles selon la zone et le restaurant.",
+    q: "Livraison à Toulouse ?",
+    a: () => (
+      <>
+        Oui — commandez via{" "}
+        <a href={siteConfig.ordering.deliverooToulouse} target="_blank" rel="noopener noreferrer" className="link-inline">
+          Deliveroo
+        </a>{" "}
+        (recherche « Mon Boum » / enseigne). La commande catalogue/paiement peut aussi passer par{" "}
+        <a href={siteConfig.ordering.restOBuro} target="_blank" rel="noopener noreferrer" className="link-inline">
+          rest-o-buro.fr
+        </a>{" "}
+        selon les CGV officielles.
+      </>
+    ),
   },
   {
-    q: "Les viandes sont-elles halal ?",
-    a: "Les cartes Mon Boum mettent en avant des options halal. Les détails restent à confirmer au restaurant lors de la commande.",
+    q: "C’est halal ?",
+    a: "Le groupe met en avant une offre halal, viande sans électronarcose — le détail des certifications et cartes est affiché en restaurant et sur les plateformes de commande.",
   },
   {
-    q: "Comment rejoindre la franchise ?",
-    a: "Passez par la page Contact (sujet Franchise) pour recevoir le process complet.",
+    q: "Devenir franchisé ?",
+    a: () => (
+      <>
+        Écrivez-nous depuis la page{" "}
+        <Link to="/franchise" className="link-inline">
+          Devenir franchisé
+        </Link>{" "}
+        ou par mail :{" "}
+        <a href={`mailto:${siteConfig.contact.franchiseEmail}`} className="link-inline">
+          {siteConfig.contact.franchiseEmail}
+        </a>
+        .
+      </>
+    ),
   },
 ];
 
@@ -31,7 +57,7 @@ export function GlobalFaq() {
           <div className="text-xs uppercase tracking-[0.25em]" style={{ color: "var(--b-red)", fontWeight: 700 }}>
             FAQ rapide
           </div>
-          <h2 className="font-display text-white mt-3" style={{ fontSize: "clamp(2rem, 5vw, 3.6rem)", letterSpacing: "0.03em" }}>
+          <h2 className="font-display mt-3" style={{ fontSize: "clamp(2rem, 5vw, 3.6rem)", letterSpacing: "0.03em", color: "var(--b-white)" }}>
             VOUS AVEZ DES QUESTIONS ?
           </h2>
         </div>
@@ -45,7 +71,7 @@ export function GlobalFaq() {
                 className="w-full px-5 py-4 flex items-center justify-between text-left"
                 aria-expanded={openIndex === i}
               >
-                <span className="text-sm font-semibold text-white">{item.q}</span>
+                <span className="text-sm font-semibold" style={{ color: "var(--b-white)" }}>{item.q}</span>
                 <ChevronDown
                   size={18}
                   style={{ color: "var(--b-red)", transform: openIndex === i ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}
@@ -53,15 +79,15 @@ export function GlobalFaq() {
               </button>
               <AnimatePresence initial={false}>
                 {openIndex === i && (
-                  <motion.p
+                  <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     className="px-5 pb-4 text-sm"
                     style={{ color: "var(--b-muted)" }}
                   >
-                    {item.a}
-                  </motion.p>
+                    {typeof item.a === "function" ? item.a() : item.a}
+                  </motion.div>
                 )}
               </AnimatePresence>
             </article>

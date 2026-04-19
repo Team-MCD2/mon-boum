@@ -3,7 +3,7 @@
 @import "./theme.css";
 
 /* ─── Design Tokens ─────────────────────────────────────── */
-:root {
+:root[data-theme="dark"] {
   --b-black:  #060606;
   --b-dark:   #0e0e0e;
   --b-card:   #141414;
@@ -15,7 +15,55 @@
   --b-muted:  #6b6b6b;
   --b-border: rgba(255,255,255,0.06);
   --b-grain-opacity: 0.055;
-  /* Clear fixed navbar + notches / Dynamic Island */
+
+  /* Theme-aware surfaces (Phase 1 light hardening) */
+  --nav-bg-scrolled: rgba(6,6,6,0.92);          /* Navbar glass after scroll */
+  --glass-surface:   rgba(6,6,6,0.72);          /* Badges/pills on images */
+  --hero-overlay-bottom: rgba(6,6,6,0.88);
+  --hero-overlay-mid:    rgba(6,6,6,0.45);
+  --hero-overlay-top:    rgba(6,6,6,0.10);
+  /* Soft text levels based on --b-white (used for hero/paragraph over dark hero) */
+  --text-soft-20: rgba(255,255,255,0.20);
+  --text-soft-50: rgba(240,237,232,0.50);
+  --text-soft-75: rgba(240,237,232,0.75);
+  --text-soft-85: rgba(240,237,232,0.85);
+
+  --nav-offset: max(
+    clamp(88px, 12vw, 132px),
+    calc(env(safe-area-inset-top, 0px) + 72px)
+  );
+}
+
+:root[data-theme="light"] {
+  /* Warm paper / diner palette — NOT clinical pure white. Keeps the Mon Boum
+     street DNA (cream tablecloth, kraft paper) while flipping contrast so the
+     brand red+yellow pop exactly like they do on dark. */
+  --b-black:  #f2ecdf;            /* Page base — warm cream, not pure white */
+  --b-dark:   #e7dfca;            /* Deeper sandstone for alternate sections */
+  --b-card:   #fbf6ea;            /* Cards: bright paper but still warm */
+  --b-card2:  #dcd2ba;            /* Accent micro-surfaces */
+  --b-white:  #1c1713;            /* Ink text: espresso — never flat black */
+  --b-muted:  #6e6250;            /* Warm grey-brown for secondary copy */
+  --b-border: rgba(28,23,19,0.14);
+  /* Brand colors stay exactly the same for that authentic Mon Boum street pop */
+  --b-red:    #E5250A;
+  --b-red2:   #ff3d20;
+  --b-yellow: #F5C518;
+  --b-grain-opacity: 0.025;       /* Keep a touch of grain for texture */
+
+  /* Light-theme equivalents — flip to cream surfaces & espresso ink */
+  --nav-bg-scrolled: rgba(242,236,223,0.92);
+  --glass-surface:   rgba(251,246,234,0.82);
+  /* Hero overlays stay dark because hero stacks white text on video — keep legible */
+  --hero-overlay-bottom: rgba(6,6,6,0.72);
+  --hero-overlay-mid:    rgba(6,6,6,0.35);
+  --hero-overlay-top:    rgba(6,6,6,0.05);
+  /* Soft text levels based on espresso ink */
+  --text-soft-20: rgba(28,23,19,0.18);
+  --text-soft-50: rgba(28,23,19,0.58);
+  --text-soft-75: rgba(28,23,19,0.78);
+  --text-soft-85: rgba(28,23,19,0.88);
+
   --nav-offset: max(
     clamp(88px, 12vw, 132px),
     calc(env(safe-area-inset-top, 0px) + 72px)
@@ -372,5 +420,71 @@ html.custom-cursor-active label {
     4px 4px 0 rgba(0, 0, 0, 0.35),
     inset 0 0 0 2px rgba(255, 255, 255, 0.12);
   transform: rotate(-1.5deg);
+}
+
+/* ─── Inline links — solid underline, avoid "spellcheck" look ─────── */
+/*
+ * Replaces the grab-bag of `underline decoration-[var(--b-red)]/40` style
+ * classes. The previous pattern rendered as a faint squiggle-ish line very
+ * close to a browser spellcheck underline. This class gives:
+ *   - solid line, 2px thick (non-wavy)
+ *   - explicit offset so it doesn't crowd the glyphs
+ *   - full-opacity red on hover for clear affordance
+ */
+.link-inline {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-color: var(--b-red);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  transition: color 200ms ease, text-decoration-color 200ms ease;
+}
+.link-inline:hover {
+  color: var(--b-white);
+  text-decoration-thickness: 2px;
+}
+/* Muted variant for footer fine-print rows where the red would be too loud */
+.link-inline-muted {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-color: var(--text-soft-50);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  transition: color 200ms ease, text-decoration-color 200ms ease;
+}
+.link-inline-muted:hover {
+  color: var(--b-white);
+  text-decoration-color: var(--b-red);
+}
+
+/* ─── Footer social icons — CSS hover (no JS onMouseEnter/Leave) ───── */
+.social-icon-link {
+  border: 1px solid var(--b-border);
+  color: var(--b-muted);
+  background-color: transparent;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    transform 200ms ease;
+}
+.social-icon-link:hover,
+.social-icon-link:focus-visible {
+  background-color: var(--b-red);
+  border-color: var(--b-red);
+  color: #fff;
+}
+
+/* Footer column links — subtle slide-in arrow + color shift on hover */
+.footer-col-link {
+  color: var(--b-muted);
+  transition: color 200ms ease, padding-left 200ms ease;
+}
+.footer-col-link:hover,
+.footer-col-link:focus-visible {
+  color: var(--b-white);
+  padding-left: 0.5rem;
 }
 

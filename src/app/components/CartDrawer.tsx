@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "motion/react";
-import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight, ExternalLink } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { siteConfig } from "../config/siteConfig";
 
 export function CartDrawer() {
   const { items, count, total, remove, update, clear, isOpen, closeCart } = useCart();
@@ -154,15 +155,30 @@ export function CartDrawer() {
                     {total.toFixed(2).replace(".", ",")}€
                   </span>
                 </div>
-                <p className="text-xs" style={{ color: "var(--b-muted)" }}>Livraison calculée à l'étape suivante</p>
-                <button
+                <p className="text-xs leading-relaxed" style={{ color: "var(--b-muted)" }}>
+                  Sélection indicative — la commande réelle passe par la plateforme officielle (tarifs et dispo à jour).
+                </p>
+                <a
+                  href={siteConfig.ordering.restOBuro}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-full flex items-center justify-center gap-3 py-4 rounded-full font-display uppercase tracking-widest btn-shine transition-all duration-300 hover:scale-105"
                   style={{ backgroundColor: "var(--b-red)", color: "white", fontSize: "1.1rem" }}
-                  aria-label="Passer commande"
+                  aria-label="Commander sur rest-o-buro.fr"
                 >
-                  Commander
-                  <ArrowRight size={18} />
-                </button>
+                  Commander en ligne
+                  <ExternalLink size={18} />
+                </a>
+                <a
+                  href={siteConfig.ordering.deliverooToulouse}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-xs uppercase tracking-widest border transition-colors"
+                  style={{ borderColor: "var(--b-border)", color: "var(--b-white)", fontWeight: 600 }}
+                >
+                  Deliveroo — Toulouse
+                  <ArrowRight size={14} />
+                </a>
                 <button
                   onClick={clear}
                   className="w-full text-center text-xs transition-colors"

@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Mail, Phone, MapPin, Send, Instagram, Facebook, Youtube, Clock, ChevronDown } from "lucide-react";
+import { Mail, Phone, MapPin, Send, Instagram, Facebook, Youtube, Clock, ChevronDown, CheckCircle2, AlertCircle } from "lucide-react";
 import { SplitText } from "../components/SplitText";
 import { MagneticButton } from "../components/MagneticButton";
+import { siteConfig } from "../config/siteConfig";
+import { SeoHead } from "../components/SeoHead";
+import { useFormspree } from "../hooks/useFormspree";
 
 const subjects = [
   "Commande en ligne",
@@ -17,7 +20,7 @@ const subjects = [
 const faqs = [
   {
     q: "Livrez-vous à domicile ?",
-    a: "Oui ! Tous nos restaurants proposent la livraison via Uber Eats, Deliveroo et Just Eat. Vous pouvez également commander directement sur notre site pour le Click & Collect.",
+    a: "Oui — en région toulousaine, la livraison passe surtout par Deliveroo (recherche Mon Boum / votre enseigne). Les commandes en ligne peuvent aussi transiter par rest-o-buro.fr selon les modalités des CGV officielles.",
   },
   {
     q: "Proposez-vous des options végétariennes ?",
@@ -33,7 +36,7 @@ const faqs = [
   },
   {
     q: "Comment ouvrir une franchise Mon Boum ?",
-    a: "Nous sommes en pleine expansion ! Remplissez le formulaire ci-dessous en sélectionnant 'Franchise & Partenariat'. Notre équipe développement vous contactera sous 48h.",
+    a: "Consultez la page « Devenir franchisé » (/franchise) et écrivez à franchise@monboum.fr — ou utilisez le formulaire ci-dessous avec le sujet « Franchise & Partenariat » (ouverture du mail via votre messagerie).",
   },
 ];
 
@@ -42,17 +45,35 @@ export function ContactPage() {
   const [formData, setFormData] = useState({
     name: "", email: "", phone: "", subject: "", message: "",
   });
-  const [submitted, setSubmitted] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  const { submit, status, errorMessage, isConfigured } = useFormspree(
+    import.meta.env.VITE_FORMSPREE_CONTACT
+  );
+  const loading = status === "submitting";
+  const success = status === "success";
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 4000);
+    if (loading) return;
+    if (isConfigured) {
+      await submit({ ...formData, _subject: formData.subject || "Contact Mon Boum" });
+      return;
+    }
+    // Fallback mailto
+    const { generalEmail } = siteConfig.contact;
+    const subject = formData.subject || "Contact Mon Boum";
+    const body = `Nom : ${formData.name}\nEmail : ${formData.email}\nTéléphone : ${formData.phone}\n\n${formData.message}`;
+    window.location.href = `mailto:${generalEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   return (
     <>
-      <title>Contact Mon Boum — Feedback, Franchise, Recrutement</title>
+      <SeoHead
+        title="Contact — Mon Boum | Toulouse"
+        description="Contactez Mon Boum : commande, réclamation, franchise, recrutement. Équipe basée à Toulouse — réponse par e-mail."
+        keywords={`contact, Mon Boum, Toulouse, franchise, ${siteConfig.seo.defaultKeywords}`}
+        ogImagePath="/favicon.png"
+      />
 
       {/* Hero */}
       <section className="relative top-safe pb-16" style={{ backgroundColor: "var(--b-black)" }} aria-label="Contactez Mon Boum">
@@ -86,8 +107,8 @@ export function ContactPage() {
                 <h2 className="font-display mb-8" style={{ fontSize: "2rem", color: "var(--b-white)", letterSpacing: "0.04em" }}>NOS COORDONNÉES</h2>
                 <div className="space-y-6 mb-10">
                   {[
-                    { href: "mailto:contact@monboum.fr", icon: Mail, label: "Email", value: "contact@monboum.fr", sub: null },
-                    { href: "tel:+33123456789", icon: Phone, label: "Téléphone", value: "+33 1 23 45 67 89", sub: "Lun–Sam : 9h00–19h00" },
+                    { href: `mailto:${siteConfig.contact.generalEmail}`, icon: Mail, label: "Email", value: siteConfig.contact.generalEmail, sub: null },
+                    { href: siteConfig.legal.phoneTel, icon: Phone, label: "Téléphone", value: siteConfig.legal.phoneDisplay, sub: "Siège — voir horaires par restaurant" },
                   ].map(({ href, icon: Icon, label, value, sub }) => (
                     <a key={label} href={href} className="flex items-start gap-4 group" aria-label={label}>
                       <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110" style={{ backgroundColor: "rgba(229,37,10,0.12)", border: "1px solid rgba(229,37,10,0.25)" }}>
@@ -106,7 +127,11 @@ export function ContactPage() {
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-widest mb-0.5" style={{ color: "var(--b-muted)", fontWeight: 600 }}>Siège social</div>
-                      <address className="text-sm not-italic" style={{ color: "var(--b-white)" }}>12 Rue de la Paix<br />75003 Paris, France</address>
+                      <address className="text-sm not-italic" style={{ color: "var(--b-white)" }}>
+                        {siteConfig.legal.street}
+                        <br />
+                        {siteConfig.legal.postalCode} {siteConfig.legal.city}, {siteConfig.legal.country}
+                      </address>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -123,9 +148,9 @@ export function ContactPage() {
                   <h3 className="text-xs uppercase tracking-[0.2em] mb-4" style={{ color: "var(--b-muted)", fontWeight: 600 }}>Réseaux sociaux</h3>
                   <div className="flex gap-3">
                     {[
-                      { icon: Instagram, href: "https://instagram.com/monboum", label: "Instagram", color: "#E1306C" },
-                      { icon: Facebook, href: "https://facebook.com/monboum", label: "Facebook", color: "#1877F2" },
-                      { icon: Youtube, href: "https://youtube.com/monboum", label: "YouTube", color: "#FF0000" },
+                      { icon: Instagram, href: siteConfig.social.instagram, label: "Instagram", color: "#E1306C" },
+                      { icon: Facebook, href: siteConfig.social.facebook, label: "Facebook", color: "#1877F2" },
+                      { icon: Youtube, href: siteConfig.social.youtube, label: "YouTube", color: "#FF0000" },
                     ].map(({ icon: Icon, href, label, color }) => (
                       <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={`Mon Boum sur ${label}`}
                         className="w-12 h-12 flex items-center justify-center rounded-full border transition-all duration-200 hover:scale-110"
@@ -144,63 +169,92 @@ export function ContactPage() {
             {/* Right form */}
             <div className="lg:col-span-3">
               <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="p-8 rounded-3xl" style={{ backgroundColor: "var(--b-card)" }}>
-                <h2 className="font-display mb-8" style={{ fontSize: "1.8rem", color: "var(--b-white)", letterSpacing: "0.04em" }}>ENVOYER UN MESSAGE</h2>
-                {submitted ? (
-                  <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16">
-                    <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 font-display text-3xl text-white" style={{ backgroundColor: "var(--b-red)" }}>✓</div>
-                    <h3 className="font-display text-white mb-2" style={{ fontSize: "2rem" }}>MESSAGE ENVOYÉ !</h3>
-                    <p className="text-sm" style={{ color: "var(--b-muted)" }}>Notre équipe vous répondra sous 24h.</p>
-                  </motion.div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-5" aria-label="Formulaire de contact Mon Boum" noValidate>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      {[
-                        { id: "name", type: "text", label: "Nom complet *", placeholder: "Jean Dupont", key: "name" as const },
-                        { id: "email", type: "email", label: "Email *", placeholder: "jean@email.fr", key: "email" as const },
-                      ].map(({ id, type, label, placeholder, key }) => (
-                        <div key={id}>
-                          <label htmlFor={id} className="block text-xs uppercase tracking-widest mb-2" style={{ color: "var(--b-muted)", fontWeight: 600 }}>{label}</label>
-                          <input id={id} type={type} required value={formData[key]} onChange={(e) => setFormData({ ...formData, [key]: e.target.value })} placeholder={placeholder}
-                            className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-200"
-                            style={{ backgroundColor: "var(--b-card2)", color: "var(--b-white)", border: "1px solid var(--b-border)" }}
-                            onFocus={(e) => (e.target.style.borderColor = "var(--b-red)")}
-                            onBlur={(e) => (e.target.style.borderColor = "var(--b-border)")}
-                            aria-required="true"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    <div>
-                      <label htmlFor="subject" className="block text-xs uppercase tracking-widest mb-2" style={{ color: "var(--b-muted)", fontWeight: 600 }}>Sujet *</label>
-                      <select id="subject" required value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-200 appearance-none"
-                        style={{ backgroundColor: "var(--b-card2)", color: formData.subject ? "var(--b-white)" : "var(--b-muted)", border: "1px solid var(--b-border)" }}
-                        onFocus={(e) => (e.target.style.borderColor = "var(--b-red)")}
-                        onBlur={(e) => (e.target.style.borderColor = "var(--b-border)")}
-                        aria-required="true"
-                      >
-                        <option value="" disabled>Choisir un sujet...</option>
-                        {subjects.map((s) => <option key={s} value={s} style={{ backgroundColor: "var(--b-card)", color: "white" }}>{s}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="message" className="block text-xs uppercase tracking-widest mb-2" style={{ color: "var(--b-muted)", fontWeight: 600 }}>Message *</label>
-                      <textarea id="message" required rows={5} value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} placeholder="Décrivez votre demande..."
-                        className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none transition-all duration-200"
-                        style={{ backgroundColor: "var(--b-card2)", color: "var(--b-white)", border: "1px solid var(--b-border)" }}
-                        onFocus={(e) => (e.target.style.borderColor = "var(--b-red)")}
-                        onBlur={(e) => (e.target.style.borderColor = "var(--b-border)")}
-                        aria-required="true"
-                      />
-                    </div>
-                    <MagneticButton>
-                      <button type="submit" className="w-full flex items-center justify-center gap-3 py-4 rounded-full text-sm uppercase tracking-widest btn-shine" style={{ backgroundColor: "var(--b-red)", color: "white", fontWeight: 700 }} aria-label="Envoyer le message">
-                        <Send size={16} />Envoyer le message
-                      </button>
-                    </MagneticButton>
-                    <p className="text-xs text-center" style={{ color: "var(--b-muted)" }}>En soumettant ce formulaire, vous acceptez notre <a href="/contact" style={{ color: "var(--b-yellow)", textDecoration: "underline" }}>politique de confidentialité</a>.</p>
-                  </form>
+                <h2 className="font-display mb-4" style={{ fontSize: "1.8rem", color: "var(--b-white)", letterSpacing: "0.04em" }}>ENVOYER UN MESSAGE</h2>
+                <p className="text-xs mb-6 leading-relaxed" style={{ color: "var(--b-muted)" }}>
+                  {isConfigured
+                    ? "Message envoyé directement à l'équipe Mon Boum — réponse par email sous 48h."
+                    : "Le formulaire ouvre votre client mail avec le message prérempli. Aucune donnée n'est stockée ici."}
+                </p>
+                {success && (
+                  <div className="rounded-xl border px-4 py-3 mb-4 flex items-start gap-2 text-sm" style={{ borderColor: "var(--b-border)", backgroundColor: "var(--b-card2)", color: "var(--b-white)" }}>
+                    <CheckCircle2 size={16} style={{ color: "#22c55e" }} className="shrink-0 mt-0.5" />
+                    <span>Message reçu — merci {formData.name || "!"}. On revient vers vous à <b>{formData.email}</b>.</span>
+                  </div>
                 )}
+                {status === "error" && errorMessage && (
+                  <div className="rounded-xl border px-4 py-3 mb-4 flex items-start gap-2 text-sm" style={{ borderColor: "#f87171", backgroundColor: "rgba(248,113,113,0.08)", color: "#f87171" }}>
+                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+                <form onSubmit={handleSubmit} className="space-y-5" aria-label="Formulaire de contact Mon Boum" noValidate>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {[
+                      { id: "name", type: "text", label: "Nom complet *", placeholder: "Jean Dupont", key: "name" as const, req: true },
+                      { id: "email", type: "email", label: "Email *", placeholder: "jean@email.fr", key: "email" as const, req: true },
+                    ].map(({ id, type, label, placeholder, key, req }) => (
+                      <div key={id}>
+                        <label htmlFor={id} className="block text-xs uppercase tracking-widest mb-2" style={{ color: "var(--b-muted)", fontWeight: 600 }}>{label}</label>
+                        <input id={id} type={type} required={req} value={formData[key]} onChange={(e) => setFormData({ ...formData, [key]: e.target.value })} placeholder={placeholder}
+                          className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-200"
+                          style={{ backgroundColor: "var(--b-card2)", color: "var(--b-white)", border: "1px solid var(--b-border)" }}
+                          onFocus={(e) => (e.target.style.borderColor = "var(--b-red)")}
+                          onBlur={(e) => (e.target.style.borderColor = "var(--b-border)")}
+                          aria-required={req}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-xs uppercase tracking-widest mb-2" style={{ color: "var(--b-muted)", fontWeight: 600 }}>Téléphone</label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="06 …"
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-200"
+                      style={{ backgroundColor: "var(--b-card2)", color: "var(--b-white)", border: "1px solid var(--b-border)" }}
+                      onFocus={(e) => (e.target.style.borderColor = "var(--b-red)")}
+                      onBlur={(e) => (e.target.style.borderColor = "var(--b-border)")}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="subject" className="block text-xs uppercase tracking-widest mb-2" style={{ color: "var(--b-muted)", fontWeight: 600 }}>Sujet *</label>
+                    <select id="subject" required value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-200 appearance-none"
+                      style={{ backgroundColor: "var(--b-card2)", color: formData.subject ? "var(--b-white)" : "var(--b-muted)", border: "1px solid var(--b-border)" }}
+                      onFocus={(e) => (e.target.style.borderColor = "var(--b-red)")}
+                      onBlur={(e) => (e.target.style.borderColor = "var(--b-border)")}
+                      aria-required="true"
+                    >
+                      <option value="" disabled>Choisir un sujet...</option>
+                      {subjects.map((s) => <option key={s} value={s} style={{ backgroundColor: "var(--b-card)", color: "white" }}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="message" className="block text-xs uppercase tracking-widest mb-2" style={{ color: "var(--b-muted)", fontWeight: 600 }}>Message *</label>
+                    <textarea id="message" required rows={5} value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} placeholder="Décrivez votre demande..."
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none transition-all duration-200"
+                      style={{ backgroundColor: "var(--b-card2)", color: "var(--b-white)", border: "1px solid var(--b-border)" }}
+                      onFocus={(e) => (e.target.style.borderColor = "var(--b-red)")}
+                      onBlur={(e) => (e.target.style.borderColor = "var(--b-border)")}
+                      aria-required="true"
+                    />
+                  </div>
+                  <MagneticButton>
+                    <button type="submit" disabled={loading || success} className="w-full flex items-center justify-center gap-3 py-4 rounded-full text-sm uppercase tracking-widest btn-shine disabled:opacity-60" style={{ backgroundColor: "var(--b-red)", color: "white", fontWeight: 700 }} aria-label="Envoyer le message">
+                      <Send size={16} />{loading ? "Envoi…" : success ? "Envoyé" : "Envoyer le message"}
+                    </button>
+                  </MagneticButton>
+                  <p className="text-xs text-center" style={{ color: "var(--b-muted)" }}>
+                    Données traitées via votre messagerie — voir aussi la{" "}
+                    <a href="https://monboum.fr/privacy-policy/" target="_blank" rel="noopener noreferrer" style={{ color: "var(--b-yellow)", textDecoration: "underline" }}>
+                      politique de confidentialité
+                    </a>{" "}
+                    (site officiel).
+                  </p>
+                </form>
               </motion.div>
             </div>
           </div>
@@ -236,7 +290,9 @@ export function ContactPage() {
           <div className="text-center mt-10">
             <p className="text-sm" style={{ color: "var(--b-muted)" }}>
               Pas trouvé votre réponse ?{" "}
-              <a href="mailto:contact@monboum.fr" style={{ color: "var(--b-yellow)", fontWeight: 600 }} aria-label="Email Mon Boum">Contactez-nous directement</a>
+              <a href={`mailto:${siteConfig.contact.generalEmail}`} style={{ color: "var(--b-yellow)", fontWeight: 600 }} aria-label="Email Mon Boum">
+                Contactez-nous directement
+              </a>
             </p>
           </div>
         </div>

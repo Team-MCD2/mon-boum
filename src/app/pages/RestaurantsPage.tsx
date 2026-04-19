@@ -1,261 +1,317 @@
-import { useState, useRef } from "react";
-import { motion, useInView } from "motion/react";
-import { MapPin, Clock, Phone, ChevronRight, Star, Utensils, Wifi, ParkingCircle, CreditCard } from "lucide-react";
-import { Link } from "react-router";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { SplitText } from "../components/SplitText";
-import { MagneticButton } from "../components/MagneticButton";
+import { useMemo, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
+import iconUrl from "leaflet/dist/images/marker-icon.png";
+import shadowUrl from "leaflet/dist/images/marker-shadow.png";
+import { MapPin, Phone, Navigation, ShoppingBag, Search } from "lucide-react";
+import { SeoHead } from "../components/SeoHead";
+import { toulouseLocations, mapsDirectionsHref, type RestaurantLocation, type EnseigneTag } from "../data/restaurants";
 
-const INTERIOR = "https://images.unsplash.com/photo-1765087909999-754261788116?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXJnZXIlMjByZXN0YXVyYW50JTIwaW50ZXJpb3IlMjBuZW9uJTIwbGlnaHRzJTIwZGFya3xlbnwxfHx8fDE3NzY0MTk5MDJ8MA&ixlib=rb-4.1.0&q=80&w=1080";
-const SMASH = "https://images.unsplash.com/photo-1678110707493-8d05425137ac?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzbWFzaCUyMGJ1cmdlciUyMGJlZWYlMjBwYXR0eSUyMGNoZWVzZSUyMG1lbHRlZHxlbnwxfHx8fDE3NzY0MTk5MDF8MA&ixlib=rb-4.1.0&q=80&w=1080";
-
-const restaurants = [
-  { id: 1, name: "Mon Boum — Paris Marais", address: "12 Rue de la Paix, 75003 Paris", city: "Paris", phone: "+33 1 23 45 67 89", hours: { weekdays: "11h30 – 23h00" }, rating: 4.9, reviews: 547, img: INTERIOR, amenities: ["wifi", "parking", "card", "delivery"], isOpen: true, badge: "Restaurant pilote", googleMaps: "https://maps.google.com" },
-  { id: 2, name: "Mon Boum — Lyon Presqu'île", address: "8 Place des Terreaux, 69001 Lyon", city: "Lyon", phone: "+33 4 56 78 90 12", hours: { weekdays: "11h30 – 23h00" }, rating: 4.8, reviews: 312, img: INTERIOR, amenities: ["wifi", "card", "delivery"], isOpen: true, badge: null, googleMaps: "https://maps.google.com" },
-  { id: 3, name: "Mon Boum — Bordeaux", address: "15 Cours de l'Intendance, 33000 Bordeaux", city: "Bordeaux", phone: "+33 5 67 89 01 23", hours: { weekdays: "11h30 – 22h30" }, rating: 4.7, reviews: 198, img: SMASH, amenities: ["wifi", "card"], isOpen: false, badge: "Nouveau", googleMaps: "https://maps.google.com" },
-  { id: 4, name: "Mon Boum — Marseille", address: "3 Rue Saint-Ferréol, 13001 Marseille", city: "Marseille", phone: "+33 4 91 23 45 67", hours: { weekdays: "11h30 – 23h00" }, rating: 4.8, reviews: 421, img: INTERIOR, amenities: ["wifi", "parking", "card", "delivery"], isOpen: true, badge: null, googleMaps: "https://maps.google.com" },
-  { id: 5, name: "Mon Boum — Toulouse", address: "22 Rue de la République, 31000 Toulouse", city: "Toulouse", phone: "+33 5 34 56 78 90", hours: { weekdays: "11h30 – 23h00" }, rating: 4.9, reviews: 289, img: SMASH, amenities: ["wifi", "card", "delivery"], isOpen: true, badge: "Coup de cœur", googleMaps: "https://maps.google.com" },
+// ── Filter definition ─────────────────────────────────────────────────────
+type FilterValue = "all" | EnseigneTag;
+const FILTERS: { value: FilterValue; label: string; short: string }[] = [
+  { value: "all",          label: "Toutes les enseignes", short: "Tout" },
+  { value: "Boum Burger",  label: "Boum Burger",           short: "Burger" },
+  { value: "Boum Pizz's",  label: "Boum Pizz's",           short: "Pizz's" },
+  { value: "Boum Chicken", label: "Boum Chicken",          short: "Chicken" },
 ];
 
-const amenityIcons: Record<string, { icon: any; label: string }> = {
-  wifi: { icon: Wifi, label: "Wi-Fi" },
-  parking: { icon: ParkingCircle, label: "Parking" },
-  card: { icon: CreditCard, label: "CB" },
-  delivery: { icon: Utensils, label: "Livraison" },
+// Direct hex palette per enseigne — kept literal because Leaflet's DivIcon
+// html is injected as raw innerHTML where CSS `var()` would not resolve when
+// concatenated (e.g. `box-shadow: … ${color}cc`).
+const BRAND_HEX: Record<EnseigneTag, string> = {
+  "Boum Burger":  "#E5250A",
+  "Boum Pizz's":  "#ff3d20",
+  "Boum Chicken": "#F5C518",
+  "Boum Saveurs": "#F5C518",
+  "Groupe":       "#E5250A",
 };
-
-function RestaurantCard({ restaurant, index }: { restaurant: any; index: number }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
-
-  return (
-    <motion.article
-      ref={ref}
-      initial={{ opacity: 0, y: 50 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ delay: index * 0.09, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-      className="card-lift rounded-2xl overflow-hidden"
-      style={{ backgroundColor: "var(--b-card)" }}
-      itemScope
-      itemType="https://schema.org/Restaurant"
-      itemProp="itemListElement"
-    >
-      {/* Image */}
-      <div className="relative img-zoom" style={{ aspectRatio: "16/9" }}>
-        <ImageWithFallback src={restaurant.img} alt={`Restaurant ${restaurant.name}`} className="w-full h-full object-cover img-inner" />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(6,6,6,0.95) 0%, transparent 55%)" }} />
-
-        {/* Open/Closed */}
-        <div
-          className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs"
-          style={{
-            backgroundColor: restaurant.isOpen ? "rgba(34,197,94,0.15)" : "rgba(229,37,10,0.15)",
-            border: `1px solid ${restaurant.isOpen ? "rgba(34,197,94,0.4)" : "rgba(229,37,10,0.4)"}`,
-            color: restaurant.isOpen ? "#4ade80" : "var(--b-red)",
-            fontWeight: 700,
-          }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: restaurant.isOpen ? "#4ade80" : "var(--b-red)" }} />
-          {restaurant.isOpen ? "Ouvert" : "Fermé"}
-        </div>
-
-        {restaurant.badge && (
-          <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs uppercase tracking-wider" style={{ backgroundColor: "var(--b-yellow)", color: "var(--b-black)", fontWeight: 700 }}>
-            {restaurant.badge}
-          </div>
-        )}
-
-        <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between">
-          <span className="font-display text-white" style={{ fontSize: "1.8rem", letterSpacing: "0.03em" }} itemProp="name">{restaurant.city}</span>
-          <div className="flex items-center gap-1.5">
-            <Star size={13} fill="var(--b-yellow)" style={{ color: "var(--b-yellow)" }} />
-            <span className="text-sm text-white font-semibold">{restaurant.rating}</span>
-            <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>({restaurant.reviews})</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Details */}
-      <div className="p-6">
-        <h2 className="text-sm font-semibold mb-1" style={{ color: "var(--b-white)" }} itemProp="name">{restaurant.name}</h2>
-        <div className="flex items-start gap-2 mb-2">
-          <MapPin size={12} style={{ color: "var(--b-yellow)", marginTop: 2, flexShrink: 0 }} />
-          <span className="text-xs" style={{ color: "var(--b-muted)" }} itemProp="address">{restaurant.address}</span>
-        </div>
-        <div className="flex items-center gap-2 mb-4">
-          <Clock size={12} style={{ color: "var(--b-yellow)" }} />
-          <span className="text-xs" style={{ color: "var(--b-muted)" }}>Lun–Ven : {restaurant.hours.weekdays}</span>
-        </div>
-
-        {/* Amenities */}
-        <div className="flex flex-wrap gap-1.5 mb-5">
-          {restaurant.amenities.map((a: string) => {
-            const am = amenityIcons[a];
-            if (!am) return null;
-            const Icon = am.icon;
-            return (
-              <span key={a} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs" style={{ backgroundColor: "var(--b-card2)", color: "var(--b-muted)" }} title={am.label}>
-                <Icon size={10} />{am.label}
-              </span>
-            );
-          })}
-        </div>
-
-        <div className="flex gap-2">
-          <a
-            href={restaurant.googleMaps}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-xs btn-shine transition-all hover:scale-105"
-            style={{ backgroundColor: "var(--b-red)", color: "white", fontWeight: 600 }}
-            aria-label={`Itinéraire vers ${restaurant.name}`}
-          >
-            <MapPin size={12} />Itinéraire
-          </a>
-          <a
-            href={`tel:${restaurant.phone.replace(/\s/g, "")}`}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-xs border transition-all hover:scale-105"
-            style={{ borderColor: "var(--b-border)", color: "var(--b-white)", fontWeight: 600 }}
-            aria-label={`Appeler ${restaurant.name}`}
-            itemProp="telephone"
-          >
-            <Phone size={12} />Appeler
-          </a>
-        </div>
-      </div>
-    </motion.article>
-  );
+function brandColorFor(enseigne: EnseigneTag): string {
+  return BRAND_HEX[enseigne];
 }
 
+// Cache DivIcons by color so React/Leaflet stop recreating them on every
+// render — this was a major source of flicker when filter state changed.
+const MARKER_ICON_CACHE = new Map<string, L.DivIcon>();
+function makeMarkerIcon(color: string) {
+  const cached = MARKER_ICON_CACHE.get(color);
+  if (cached) return cached;
+  const icon = new L.DivIcon({
+    className: "custom-marker",
+    html: `<div style="background-color:${color};width:22px;height:22px;border-radius:50%;border:3px solid #0a0a0a;box-shadow:0 0 10px ${color}cc;"></div>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+  });
+  MARKER_ICON_CACHE.set(color, icon);
+  return icon;
+}
+
+// Fix Leaflet default icon URLs (still needed for popups/fallback rendering).
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl,
+  iconUrl,
+  shadowUrl,
+});
+
 export function RestaurantsPage() {
-  const [selectedCity, setSelectedCity] = useState("Toutes");
-  const cities = ["Toutes", ...Array.from(new Set(restaurants.map((r) => r.city)))];
-  const filtered = selectedCity === "Toutes" ? restaurants : restaurants.filter((r) => r.city === selectedCity);
+  const [activeRes, setActiveRes] = useState<RestaurantLocation | null>(null);
+  const [filter, setFilter] = useState<FilterValue>("all");
+  const [query, setQuery] = useState("");
+
+  const visibleLocations = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return toulouseLocations.filter((r) => {
+      if (filter !== "all" && r.enseigne !== filter) return false;
+      if (!q) return true;
+      return (
+        r.name.toLowerCase().includes(q) ||
+        r.shortName.toLowerCase().includes(q) ||
+        r.address.toLowerCase().includes(q) ||
+        r.city.toLowerCase().includes(q) ||
+        r.postalCode.includes(q)
+      );
+    });
+  }, [filter, query]);
+
+  // Counts per filter (drives the badge on each chip).
+  const counts = useMemo(() => {
+    const base: Record<FilterValue, number> = {
+      "all": toulouseLocations.length,
+      "Boum Burger":  0,
+      "Boum Pizz's":  0,
+      "Boum Chicken": 0,
+      "Boum Saveurs": 0,
+      "Groupe":       0,
+    };
+    for (const r of toulouseLocations) base[r.enseigne]++;
+    return base;
+  }, []);
 
   return (
     <>
-      <title>Nos Restaurants Mon Boum — Paris, Lyon, Bordeaux, Marseille, Toulouse</title>
+      <SeoHead
+        title="Nos Restaurants à Toulouse — Mon Boum"
+        description="Retrouvez toutes les adresses Mon Boum dans la métropole toulousaine: Boum Burger, Boum Pizz's, Boum Chicken, Boum Saveurs."
+      />
+      <main className="flex flex-col md:flex-row h-screen pt-[72px]" style={{ backgroundColor: "var(--b-black)" }}>
 
-      {/* Hero */}
-      <section className="relative top-safe pb-16" style={{ backgroundColor: "var(--b-black)" }} aria-label="Nos restaurants Mon Boum">
-        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, var(--b-red), transparent 50%)" }} />
-        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-px" style={{ backgroundColor: "var(--b-red)" }} />
-            <span className="text-xs uppercase tracking-[0.25em]" style={{ color: "var(--b-red)", fontWeight: 700 }}>5 adresses en France</span>
-          </motion.div>
-          <div className="overflow-hidden">
-            <motion.h1
-              initial={{ y: "105%" }}
-              animate={{ y: 0 }}
-              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-              className="font-display"
-              style={{ fontSize: "clamp(4rem, 15vw, 12rem)", lineHeight: 0.85, color: "var(--b-white)", letterSpacing: "0.02em" }}
-            >
-              NOS<br /><span style={{ color: "var(--b-red)" }}>RESTAURANTS</span>
-            </motion.h1>
-          </div>
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-6 max-w-lg text-sm" style={{ color: "rgba(240,237,232,0.45)" }}>
-            Retrouvez-nous dans 5 villes françaises. Chaque restaurant est un espace unique, pensé pour une expérience BOUM mémorable.
-          </motion.p>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="flex flex-wrap gap-3 mt-10" role="group" aria-label="Filtrer par ville">
-            {cities.map((city) => (
-              <button
-                key={city}
-                onClick={() => setSelectedCity(city)}
-                className="px-5 py-2.5 rounded-full text-xs uppercase tracking-widest transition-all duration-200"
+        {/* ══════════════════════════════════════════════════
+            SIDEBAR — filters + list
+        ══════════════════════════════════════════════════ */}
+        <aside
+          className="w-full md:w-[380px] lg:w-[420px] h-[50vh] md:h-full overflow-y-auto border-r border-b md:border-b-0 hide-scrollbar"
+          style={{ borderColor: "var(--b-border)", backgroundColor: "var(--b-dark)" }}
+          aria-label="Liste des restaurants"
+        >
+          <div className="p-6 pb-4 sticky top-0 z-10" style={{ backgroundColor: "var(--b-dark)", borderBottom: "1px solid var(--b-border)" }}>
+            <h1 className="font-display mb-2" style={{ fontSize: "2.5rem", color: "var(--b-white)" }}>NOS ADRESSES</h1>
+            <p className="text-sm mb-4" style={{ color: "var(--b-muted)" }}>
+              <strong style={{ color: "var(--b-white)" }}>{visibleLocations.length}</strong>
+              {visibleLocations.length > 1 ? " restaurants" : " restaurant"}
+              {filter !== "all" && <> · <span style={{ color: "var(--b-yellow)" }}>{filter}</span></>}
+              {query && <> · recherche « {query} »</>}
+            </p>
+
+            {/* Search */}
+            <label className="relative block mb-4" aria-label="Rechercher un restaurant">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--b-muted)" }} />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Quartier, ville, code postal…"
+                className="w-full pl-9 pr-3 py-2.5 rounded-full text-sm outline-none"
                 style={{
-                  backgroundColor: selectedCity === city ? "var(--b-red)" : "var(--b-card)",
-                  color: selectedCity === city ? "white" : "var(--b-muted)",
-                  fontWeight: 700,
-                  border: selectedCity === city ? "none" : "1px solid var(--b-border)",
+                  backgroundColor: "var(--b-card)",
+                  color: "var(--b-white)",
+                  border: "1px solid var(--b-border)",
                 }}
-                aria-pressed={selectedCity === city}
-              >
-                {city}
-              </button>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+              />
+            </label>
 
-      {/* Featured flagship */}
-      {selectedCity === "Toutes" && (
-        <section className="py-12" style={{ backgroundColor: "var(--b-dark)" }}>
-          <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-            <div className="rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-2" style={{ backgroundColor: "var(--b-card)" }}>
-              <div className="relative img-zoom" style={{ minHeight: "400px" }}>
-                <ImageWithFallback src={INTERIOR} alt="Restaurant Mon Boum Paris Marais — flagship" className="absolute inset-0 w-full h-full object-cover img-inner" />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(6,6,6,0.3), transparent)" }} />
-                <div className="absolute top-6 left-6 px-4 py-2 rounded-full text-xs uppercase tracking-wider" style={{ backgroundColor: "var(--b-yellow)", color: "var(--b-black)", fontWeight: 700 }}>Restaurant pilote</div>
-              </div>
-              <div className="p-10 flex flex-col justify-center">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-6 h-px" style={{ backgroundColor: "var(--b-red)" }} />
-                  <span className="text-xs uppercase tracking-widest" style={{ color: "var(--b-red)", fontWeight: 700 }}>Notre flagship</span>
-                </div>
-                <h2 className="font-display mb-4" style={{ fontSize: "3rem", color: "var(--b-white)", letterSpacing: "0.03em" }}>Paris Marais</h2>
-                <p className="mb-6 text-sm leading-relaxed" style={{ color: "var(--b-muted)" }}>Notre restaurant historique, là où tout a commencé. 60 couverts, terrasse animée, la meilleure version de nos burgers, pizzas et tacos.</p>
-                <div className="flex items-center gap-2 mb-3">
-                  {[1,2,3,4,5].map((s) => <Star key={s} size={14} fill="var(--b-yellow)" style={{ color: "var(--b-yellow)" }} />)}
-                  <span className="text-sm" style={{ color: "var(--b-muted)" }}>4.9 · 547 avis</span>
-                </div>
-                <div className="flex items-center gap-2 mb-6 text-sm" style={{ color: "var(--b-muted)" }}>
-                  <MapPin size={14} style={{ color: "var(--b-yellow)" }} />12 Rue de la Paix, 75003 Paris
-                </div>
-                <div className="flex gap-3">
-                  <MagneticButton>
-                    <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-3 rounded-full text-sm btn-shine" style={{ backgroundColor: "var(--b-red)", color: "white", fontWeight: 600 }} aria-label="Itinéraire Google Maps">
-                      <MapPin size={14} />Itinéraire
-                    </a>
-                  </MagneticButton>
-                  <a href="tel:+33123456789" className="flex items-center gap-2 px-5 py-3 rounded-full text-sm border" style={{ borderColor: "var(--b-border)", color: "var(--b-white)", fontWeight: 600 }} aria-label="Appeler">
-                    <Phone size={14} />Appeler
+            {/* Filter chips */}
+            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filtrer par enseigne">
+              {FILTERS.filter((f) => f.value === "all" || counts[f.value] > 0).map((f) => {
+                const active = filter === f.value;
+                const color = f.value === "all" ? "var(--b-red)" : brandColorFor(f.value as EnseigneTag);
+                return (
+                  <button
+                    key={f.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setFilter(f.value)}
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs uppercase tracking-[0.18em] transition-all"
+                    style={{
+                      backgroundColor: active ? color : "var(--b-card)",
+                      color: active ? "white" : "var(--b-white)",
+                      border: `1px solid ${active ? color : "var(--b-border)"}`,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {f.short}
+                    <span
+                      className="inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.3rem] text-[0.65rem]"
+                      style={{
+                        backgroundColor: active ? "rgba(255,255,255,0.22)" : "var(--b-card2)",
+                        color: active ? "white" : "var(--b-muted)",
+                      }}
+                    >
+                      {counts[f.value]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Location list */}
+          <div className="flex flex-col">
+            {visibleLocations.length === 0 && (
+              <p className="p-6 text-sm" style={{ color: "var(--b-muted)" }}>
+                Aucun restaurant ne correspond aux filtres. <button onClick={() => { setFilter("all"); setQuery(""); }} className="underline" style={{ color: "var(--b-red)" }}>Réinitialiser</button>
+              </p>
+            )}
+            {visibleLocations.map((res) => {
+              const color = brandColorFor(res.enseigne);
+              const isActive = activeRes?.id === res.id;
+              return (
+                <button
+                  key={res.id}
+                  onClick={() => setActiveRes(res)}
+                  className="text-left p-5 border-b transition-colors"
+                  style={{
+                    borderColor: "var(--b-border)",
+                    backgroundColor: isActive ? "var(--b-card)" : "transparent",
+                    borderLeft: `4px solid ${isActive ? color : "transparent"}`,
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-2 gap-2">
+                    <h3 className="font-display text-lg" style={{ color: "var(--b-white)" }}>{res.shortName}</h3>
+                    <span
+                      className="text-[0.6rem] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest shrink-0"
+                      style={{ backgroundColor: color, color: "white" }}
+                    >
+                      {res.enseigne.replace("Boum ", "")}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2 mb-1.5 text-sm" style={{ color: "var(--b-muted)" }}>
+                    <MapPin size={13} className="mt-0.5 shrink-0" style={{ color }} />
+                    <span>{res.address}, {res.postalCode} {res.city}</span>
+                  </div>
+                  <a
+                    href={`tel:${res.phoneTel}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-2 mb-3 text-sm transition-colors"
+                    style={{ color: "var(--b-muted)" }}
+                  >
+                    <Phone size={13} style={{ color }} />
+                    {res.phoneDisplay}
                   </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
 
-      {/* All cards */}
-      <section className="py-16" style={{ backgroundColor: "var(--b-black)" }} aria-label="Liste des restaurants Mon Boum" itemScope itemType="https://schema.org/ItemList">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((restaurant, i) => (
-              <RestaurantCard key={restaurant.id} restaurant={restaurant} index={i} />
-            ))}
+                  <div className="flex gap-2">
+                    <a
+                      href={res.deliverooUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-bold transition-colors text-white"
+                      style={{ backgroundColor: color }}
+                    >
+                      <ShoppingBag size={12} /> Commander
+                    </a>
+                    <a
+                      href={mapsDirectionsHref(res.lat, res.lng, res.name)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-bold transition-colors"
+                      style={{
+                        backgroundColor: "var(--b-card2)",
+                        color: "var(--b-white)",
+                      }}
+                      aria-label={`Itinéraire vers ${res.name}`}
+                    >
+                      <Navigation size={12} /> Itinéraire
+                    </a>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-        </div>
-      </section>
+        </aside>
 
-      {/* Franchise CTA */}
-      <section className="py-20 relative overflow-hidden" style={{ backgroundColor: "var(--b-dark)" }} aria-label="Franchise Mon Boum">
-        <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: "radial-gradient(circle at 80% 50%, var(--b-yellow), transparent 60%)" }} />
-        <div className="relative max-w-2xl mx-auto text-center px-5">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="w-8 h-px" style={{ backgroundColor: "var(--b-yellow)" }} />
-              <span className="text-xs uppercase tracking-[0.25em]" style={{ color: "var(--b-yellow)", fontWeight: 700 }}>Rejoindre l'aventure</span>
-              <div className="w-8 h-px" style={{ backgroundColor: "var(--b-yellow)" }} />
-            </div>
-            <SplitText
-              text="OUVRIR UN MON BOUM"
-              as="h2"
-              className="font-display text-white mb-6"
-              style={{ fontSize: "clamp(2.5rem, 7vw, 5rem)", lineHeight: 0.9, letterSpacing: "0.02em", justifyContent: "center" }}
-              mode="words"
+        {/* ══════════════════════════════════════════════════
+            MAP
+        ══════════════════════════════════════════════════ */}
+        <div className="w-full flex-1 h-[50vh] md:h-full relative filter-dark-map z-0">
+          <MapContainer
+            center={[43.6045, 1.444]}
+            zoom={12}
+            scrollWheelZoom={false}
+            /* Use Canvas for smoother pan/zoom and fewer DOM repaints — especially
+               noticeable when filter chips reshape the visible marker set. */
+            preferCanvas
+            zoomControl={false}
+            style={{ height: "100%", width: "100%", zIndex: 0 }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
-            <p className="mb-8 text-sm" style={{ color: "rgba(240,237,232,0.45)" }}>Vous souhaitez rejoindre la famille Mon Boum ? Découvrez nos opportunités de franchise dans toute la France.</p>
-            <MagneticButton>
-              <Link to="/contact" className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-sm uppercase tracking-widest btn-shine" style={{ backgroundColor: "var(--b-yellow)", color: "var(--b-black)", fontWeight: 700 }} aria-label="Contacter Mon Boum pour la franchise">
-                Nous contacter <ChevronRight size={15} />
-              </Link>
-            </MagneticButton>
-          </motion.div>
+            {visibleLocations.map((res) => {
+              const color = brandColorFor(res.enseigne);
+              return (
+                <Marker
+                  key={res.id}
+                  position={[res.lat, res.lng]}
+                  icon={makeMarkerIcon(color)}
+                  eventHandlers={{ click: () => setActiveRes(res) }}
+                >
+                  <Popup className="custom-popup">
+                    <div className="p-1 min-w-[190px]">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <h4 className="font-display text-base" style={{ color: "#000" }}>{res.shortName}</h4>
+                        <span className="text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest" style={{ backgroundColor: color, color: "white" }}>
+                          {res.enseigne.replace("Boum ", "")}
+                        </span>
+                      </div>
+                      <p className="text-xs mb-2" style={{ color: "#333" }}>{res.address}, {res.postalCode} {res.city}</p>
+                      <div className="flex gap-1">
+                        <a href={res.deliverooUrl} target="_blank" rel="noopener noreferrer" className="block text-center py-1.5 px-2 rounded text-xs font-bold text-white flex-1" style={{ backgroundColor: color }}>
+                          Commander
+                        </a>
+                        <a href={mapsDirectionsHref(res.lat, res.lng, res.name)} target="_blank" rel="noopener noreferrer" className="block text-center py-1.5 px-2 rounded text-xs font-bold flex-1" style={{ backgroundColor: "#111", color: "#fff" }}>
+                          Itinéraire
+                        </a>
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
+          </MapContainer>
         </div>
-      </section>
+
+      </main>
+      
+      {/* Add dark theme map fixes */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .leaflet-container {
+          background-color: var(--b-black) !important;
+        }
+        .custom-popup .leaflet-popup-content-wrapper {
+          background-color: var(--b-white);
+          color: var(--b-black);
+          border-radius: 8px;
+        }
+        .custom-popup .leaflet-popup-tip {
+          background-color: var(--b-white);
+        }
+      `}} />
     </>
   );
 }

@@ -7,6 +7,8 @@ import { Marquee } from "../components/Marquee";
 import { SplitText } from "../components/SplitText";
 import { MagneticButton } from "../components/MagneticButton";
 import { useCart } from "../context/CartContext";
+import { siteConfig } from "../config/siteConfig";
+import { SeoHead } from "../components/SeoHead";
 
 const IMG = {
   burger: "https://images.unsplash.com/photo-1678110707493-8d05425137ac?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzbWFzaCUyMGJ1cmdlciUyMGJlZWYlMjBwYXR0eSUyMGNoZWVzZSUyMG1lbHRlZHxlbnwxfHx8fDE3NzY0MTk5MDF8MA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -184,7 +186,12 @@ export function MenuPage() {
 
   return (
     <>
-      <title>Menu Mon Boum — Pizza · Burger · Tacos · Sides & Milkshakes</title>
+      <SeoHead
+        title="Menu — Mon Boum | Pizza, burger, tacos, halal Toulouse"
+        description="Menu illustratif Mon Boum — pizzas, burgers smash, tacos halal. Tarifs indicatifs ; carte officielle sur rest-o-buro.fr (CGV monboum.fr)."
+        keywords={`menu, carte, Mon Boum, Toulouse, halal, ${siteConfig.seo.defaultKeywords}`}
+        ogImagePath="/favicon.png"
+      />
 
       {/* Hero */}
       <section className="relative top-safe pb-16 overflow-hidden" style={{ backgroundColor: "var(--b-black)" }} aria-label="Menu Mon Boum">
@@ -290,7 +297,7 @@ export function MenuPage() {
           </p>
           <MagneticButton>
             <Link
-              to="/restaurants"
+              to="/nos-restaurants"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-full uppercase tracking-widest text-sm btn-shine"
               style={{ backgroundColor: "var(--b-red)", color: "white", fontWeight: 700 }}
               aria-label="Trouver un restaurant Mon Boum"

@@ -1,54 +1,55 @@
 import { Outlet, useLocation } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
 import { CustomCursor } from "./components/CustomCursor";
 import { useCustomCursorEnabled } from "./hooks/useCustomCursorEnabled";
-import { CartDrawer } from "./components/CartDrawer";
 import { PageTransition } from "./components/PageTransition";
-import { CartProvider } from "./context/CartContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { IntroPreface } from "./components/IntroPreface";
+import { siteConfig, getJsonLdSiteUrl } from "./config/siteConfig";
 
 export function Root() {
   const { pathname } = useLocation();
   const customCursorOn = useCustomCursorEnabled();
+
+  const jsonLd = useMemo(
+    () => ({
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      name: siteConfig.siteName,
+      description:
+        "Mon Boum — street-food halal depuis 2004. Pizzas, burgers, tacos — Toulouse & métropole.",
+      url: getJsonLdSiteUrl(),
+      foundingDate: "2004",
+      servesCuisine: ["Pizza", "Burger", "Tacos", "Street Food"],
+      priceRange: "€€",
+      telephone: siteConfig.legal.phoneTel.replace("tel:", ""),
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: siteConfig.legal.street,
+        addressLocality: siteConfig.legal.city,
+        postalCode: siteConfig.legal.postalCode,
+        addressCountry: "FR",
+      },
+      sameAs: [siteConfig.social.instagram, siteConfig.social.tiktok, siteConfig.social.facebook, siteConfig.social.youtube],
+    }),
+    []
+  );
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
   return (
-    <CartProvider>
+    <ThemeProvider>
       <IntroPreface />
 
-      {/* Grain overlay */}
       <div className="grain" aria-hidden="true" />
 
       {customCursorOn && <CustomCursor />}
 
-      {/* Cart drawer */}
-      <CartDrawer />
-
-      {/* Structured data for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Restaurant",
-            name: "Mon Boum",
-            description: "Mon Boum — Le meilleur du street-food depuis 2004. Pizzas, burgers, tacos artisanaux.",
-            url: "https://monboum.fr",
-            foundingDate: "2004",
-            servesCuisine: ["Pizza", "Burger", "Tacos", "Street Food"],
-            priceRange: "€€",
-            telephone: "+33 1 23 45 67 89",
-            address: { "@type": "PostalAddress", streetAddress: "12 Rue de la Paix", addressLocality: "Paris", postalCode: "75001", addressCountry: "FR" },
-            aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "2147" },
-            sameAs: ["https://www.instagram.com/monboum", "https://www.facebook.com/monboum", "https://www.tiktok.com/@monboum"],
-          }),
-        }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--b-black)" }}>
         <Navbar />
@@ -59,6 +60,6 @@ export function Root() {
         </main>
         <Footer />
       </div>
-    </CartProvider>
+    </ThemeProvider>
   );
 }
